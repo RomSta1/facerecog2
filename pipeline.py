@@ -114,7 +114,9 @@ class CameraPipeline(threading.Thread):
                         and face_w >= 80
                         and now_mono - self._last_unknown >= UNKNOWN_COOLDOWN
                         and face["det_score"] >= 0.5):
-                    self._save_unknown(frame, face)
+                    hd = self._grab_hd_frame()
+                    self._save_unknown(hd if hd is not None else frame, face,
+                                       use_full=hd is not None)
                     self._last_unknown = now_mono
                 continue
 
@@ -200,12 +202,16 @@ class CameraPipeline(threading.Thread):
         path = os.path.join(day_dir, f"{self.camera_name}_{name}_{ts}.jpg")
         cv2.imwrite(path, frame)
 
-    def _save_unknown(self, frame, face):
-        crop = _crop_face(frame, face["bbox"])
-        if crop.size == 0:
-            return
+    def _save_unknown(self, frame, face, use_full=False):
+        if use_full:
+            # HD frame — save full frame, face is clearly visible
+            out = frame
+        else:
+            out = _crop_face(frame, face["bbox"])
+            if out.size == 0:
+                return
         os.makedirs(self.unknown_dir, exist_ok=True)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         path = os.path.join(self.unknown_dir, f"{self.camera_name}_{ts}.jpg")
-        cv2.imwrite(path, crop)
-        log.debug("[%s] saved unknown crop → %s", self.camera_name, path)
+        cv2.imwrite(path, out)
+        log.debug("[%s] saved unknown → %s (hd=%s)", self.camera_name, path, use_full)
