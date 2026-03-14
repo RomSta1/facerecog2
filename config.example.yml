@@ -1,0 +1,37 @@
+cameras:
+  cam_65:
+    rtsp: rtsp://user:password@192.168.1.65/stream2
+    rtsp_hd: rtsp://user:password@192.168.1.65/stream1
+    rotation: 90
+    fps_process: 2
+  cam_64:
+    rtsp: rtsp://user:password@192.168.1.64/stream2
+    rtsp_hd: rtsp://user:password@192.168.1.64/stream1
+    rotation: 0
+    fps_process: 1
+
+recognition:
+  det_score_min: 0.3
+  similarity_threshold: 0.50
+  unknown_threshold: 0.38
+  cooldown_sec: 30
+  det_size: 320
+
+mqtt:
+  host: 192.168.1.20
+  port: 1883
+  user: mqtt
+  password: mqtt
+  topic: facerecog2/result
+
+face_db:
+  path: /opt/facerecog2/data/faces
+  cache: /opt/facerecog2/data/embeddings.pkl
+
+snapshots:
+  path: /opt/facerecog2/data/snapshots
+  keep_hours: 24
+
+api:
+  host: 0.0.0.0
+  port: 8080
