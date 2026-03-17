@@ -6,6 +6,7 @@ from insightface.app import FaceAnalysis
 class Recognizer:
     def __init__(self, det_score_min=0.3, det_size=320):
         self.det_score_min = det_score_min
+        # OpenVINO on CPU is faster than iGPU on N100 (AVX2/VNNI optimized)
         self.app = FaceAnalysis(
             name="buffalo_l",
             providers=["OpenVINOExecutionProvider", "CPUExecutionProvider"],
