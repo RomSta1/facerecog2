@@ -518,7 +518,7 @@ setInterval(checkHealth,15000);
 </html>"""
 
 
-def create_app(face_db, snapshot_dir=SNAPSHOT_DIR):
+def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
     app = Flask(__name__)
     unknown_dir = os.path.join(os.path.dirname(snapshot_dir), "unknown")
     _rebuild_lock = threading.Lock()
@@ -724,11 +724,20 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR):
         except Exception as e:
             return jsonify({"lines": str(e)})
 
+    @app.route("/trigger/<camera_name>", methods=["POST"])
+    def trigger(camera_name):
+        """Trigger immediate recognition on a camera (called by Home Assistant on motion)."""
+        if cameras is None or camera_name not in cameras:
+            return jsonify({"error": f"camera '{camera_name}' not found"}), 404
+        cam = cameras[camera_name]
+        threading.Thread(target=cam.trigger, daemon=True).start()
+        return jsonify({"status": "triggered", "camera": camera_name}), 202
+
     return app
 
 
-def run_api(face_db, host, port, snapshot_dir=SNAPSHOT_DIR):
-    flask_app = create_app(face_db, snapshot_dir)
+def run_api(face_db, host, port, snapshot_dir=SNAPSHOT_DIR, cameras=None):
+    flask_app = create_app(face_db, snapshot_dir, cameras)
     t = threading.Thread(
         target=lambda: flask_app.run(host=host, port=port, debug=False, use_reloader=False),
         daemon=True,

@@ -184,6 +184,62 @@ class CameraPipeline(threading.Thread):
                          self.camera_name, name, best["score"], best["sim"],
                          hd_frame is not None)
 
+    def trigger(self):
+        """Force immediate recognition — called by Home Assistant on motion detection."""
+        log.info("[%s] triggered by external event", self.camera_name)
+        frame = self._grab_hd_frame()
+        if frame is None:
+            # fallback to low-res stream
+            try:
+                cap = cv2.VideoCapture(self.rtsp)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                for _ in range(10):
+                    ret, f = cap.read()
+                    if ret:
+                        frame = self._rotate(f)
+                        break
+                cap.release()
+            except Exception:
+                log.exception("[%s] trigger: failed to grab frame", self.camera_name)
+        if frame is None:
+            log.warning("[%s] trigger: no frame available", self.camera_name)
+            return
+        try:
+            self._process_raw(frame)
+        except Exception:
+            log.exception("[%s] trigger: _process_raw crashed", self.camera_name)
+
+    def _process_raw(self, frame):
+        """Run recognition on an already-rotated frame (used by trigger)."""
+        enhanced = apply_clahe(frame)
+        faces = self.recognizer.get_faces(enhanced)
+        if not faces:
+            log.info("[%s] trigger: no faces detected", self.camera_name)
+            return
+        now_dt = datetime.now()
+        now_mono = time.monotonic()
+        for face in faces:
+            x1, y1, x2, y2 = face["bbox"]
+            face_w = x2 - x1
+            name, score = self.face_db.identify(face["embedding"])
+            log.info("[%s] trigger det=%.2f w=%d → %s %.3f",
+                     self.camera_name, face["det_score"], face_w, name, score)
+            if name == "unknown":
+                pose = face.get("pose")
+                frontal = (pose is None or (abs(pose[0]) < 30 and abs(pose[1]) < 35))
+                if frontal and face_w >= 80 and face["det_score"] >= 0.5:
+                    self._hd_executor.submit(self._grab_and_save_unknown, frame, face)
+                continue
+            last = self._last_seen.get(name)
+            if last and (now_dt - last).total_seconds() < self.cooldown_sec:
+                log.info("[%s] trigger: %s in cooldown", self.camera_name, name)
+                continue
+            self._last_seen[name] = now_dt
+            snapshot = self._draw_hd(frame, name, score)
+            self._save_snapshot(snapshot, name)
+            self.mqtt.publish(self.camera_name, name, score, snapshot)
+            log.info("[%s] trigger RECOGNIZED %s sim=%.3f", self.camera_name, name, score)
+
     def _grab_hd_frame(self):
         """Open HD stream in background, grab one frame, return rotated (or None)."""
         if not self.rtsp_hd:

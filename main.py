@@ -107,7 +107,9 @@ def main():
 
     mqtt = MQTTClient(mqtt_cfg)
 
-    run_api(face_db, api_cfg["host"], api_cfg["port"], snap_cfg["path"])
+    # cameras dict is passed to run_api so /trigger endpoint can reach pipelines
+    cameras = {}
+    run_api(face_db, api_cfg["host"], api_cfg["port"], snap_cfg["path"], cameras)
 
     stop_event = threading.Event()
 
@@ -125,6 +127,7 @@ def main():
             cam_name, cam_cfg, recognizer, face_db, mqtt,
             snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event,
         )
+        cameras[cam_name] = threads[cam_name]  # expose to /trigger endpoint
 
     watchdog_t = threading.Thread(
         target=_watchdog,
