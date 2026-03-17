@@ -47,7 +47,8 @@ class MQTTClient:
     def publish(self, camera, name, score, snapshot_bgr):
         """Publish recognition result with JPEG snapshot."""
         _, buf = cv2.imencode(".jpg", snapshot_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        img_b64 = base64.b64encode(buf.tobytes()).decode()
+        jpg_bytes = buf.tobytes()
+        img_b64 = base64.b64encode(jpg_bytes).decode()
         payload = json.dumps({
             "camera": camera,
             "name": name,
@@ -56,6 +57,10 @@ class MQTTClient:
         })
         with self._lock:
             if self._connected:
+                # JSON result (existing)
                 self._client.publish(self.topic, payload, qos=1)
+                # raw JPEG for HA mqtt camera — facerecog2/<camera>/image
+                img_topic = f"{self.topic.rsplit('/', 1)[0]}/{camera}/image"
+                self._client.publish(img_topic, jpg_bytes, qos=0, retain=True)
             else:
                 log.warning("MQTT not connected, dropping message")
