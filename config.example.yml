@@ -3,12 +3,14 @@ cameras:
     rtsp: rtsp://user:password@192.168.1.65/stream2
     rtsp_hd: rtsp://user:password@192.168.1.65/stream1
     rotation: 90
-    fps_process: 2
+    fps_process: 5
+    min_face_w: 60        # ignore faces narrower than this (distant/blurry)
   cam_64:
     rtsp: rtsp://user:password@192.168.1.64/stream2
     rtsp_hd: rtsp://user:password@192.168.1.64/stream1
     rotation: 0
-    fps_process: 1
+    fps_process: 2
+    min_face_w: 0
 
 recognition:
   det_score_min: 0.3

@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 import os
 import threading
@@ -40,6 +41,9 @@ class CameraPipeline(threading.Thread):
         self.rtsp_hd = cfg.get("rtsp_hd")
         self.rotation = cfg.get("rotation", 0)
         self.fps_process = cfg.get("fps_process", 2)
+        # minimum face width in pixels to attempt recognition/save
+        # faces smaller than this are completely ignored (distant/blurry)
+        self.min_face_w = cfg.get("min_face_w", 0)
         self.recognizer = recognizer
         self.face_db = face_db
         self.mqtt = mqtt_client
@@ -48,9 +52,12 @@ class CameraPipeline(threading.Thread):
         self.cooldown_sec = cooldown_sec
         self.stop_event = stop_event
         self._last_seen = {}        # name -> datetime (cooldown start)
-        self._best = {}             # name -> {"score", "frame", "face", "deadline"}
+        self._best = {}             # name -> {score, sim, frame, face, hd_future, deadline, sent}
         self._last_unknown = 0.0   # monotonic (unknown saves)
         self._best_shot_window = 4.0  # seconds to collect best frame
+        # HD grabs run in a background thread so they never block the detection loop
+        self._hd_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1,
+                                                                   thread_name_prefix=f"hd-{camera_name}")
 
     def run(self):
         log.info("[%s] starting %s", self.camera_name, self.rtsp)
@@ -103,13 +110,20 @@ class CameraPipeline(threading.Thread):
         now_mono = time.monotonic()
 
         for face in faces:
+            x1, y1, x2, y2 = face["bbox"]
+            face_w = x2 - x1
+
+            # skip distant/blurry faces entirely — no recognition, no HD grab
+            if self.min_face_w and face_w < self.min_face_w:
+                log.info("[%s] SKIP (too small): w=%d < min=%d det=%.2f",
+                         self.camera_name, face_w, self.min_face_w, face["det_score"])
+                continue
+
             name, score = self.face_db.identify(face["embedding"])
-            log.info("[%s] det=%.2f → %s %.3f", self.camera_name, face["det_score"], name, score)
+            log.info("[%s] det=%.2f w=%d → %s %.3f",
+                     self.camera_name, face["det_score"], face_w, name, score)
 
             if name == "unknown":
-                # save crop if cooldown passed, face is clear, frontal and close enough
-                x1, y1, x2, y2 = face["bbox"]
-                face_w = x2 - x1
                 pose = face.get("pose")
                 frontal = (pose is None or
                            (abs(pose[0]) < 30 and abs(pose[1]) < 35))
@@ -117,9 +131,8 @@ class CameraPipeline(threading.Thread):
                         and face_w >= 80
                         and now_mono - self._last_unknown >= UNKNOWN_COOLDOWN
                         and face["det_score"] >= 0.5):
-                    hd = self._grab_hd_frame()
-                    self._save_unknown(hd if hd is not None else frame, face,
-                                       use_full=hd is not None)
+                    # async HD grab + save so loop is not blocked
+                    self._hd_executor.submit(self._grab_and_save_unknown, frame, face)
                     self._last_unknown = now_mono
                 else:
                     yaw = round(pose[0], 1) if pose else None
@@ -130,7 +143,7 @@ class CameraPipeline(threading.Thread):
 
             last = self._last_seen.get(name)
             if last and (now_dt - last).total_seconds() < self.cooldown_sec:
-                # within cooldown — but still update best shot if window open
+                # within cooldown — update best shot if window still open
                 best = self._best.get(name)
                 if best and now_mono < best["deadline"] and face["det_score"] > best["score"]:
                     best["score"] = face["det_score"]
@@ -138,15 +151,16 @@ class CameraPipeline(threading.Thread):
                     best["face"] = face
                 continue
 
-            # first detection after cooldown — grab HD immediately, start best-shot window
+            # first detection after cooldown — start best-shot window
+            # HD grab is submitted to background thread immediately so loop stays fast
             self._last_seen[name] = now_dt
-            hd_frame = self._grab_hd_frame()
+            hd_future = self._hd_executor.submit(self._grab_hd_frame)
             self._best[name] = {
                 "score": face["det_score"],
                 "sim": score,
                 "frame": frame,
                 "face": face,
-                "hd_frame": hd_frame,
+                "hd_future": hd_future,
                 "deadline": now_mono + self._best_shot_window,
                 "sent": False,
             }
@@ -155,7 +169,11 @@ class CameraPipeline(threading.Thread):
         for name, best in list(self._best.items()):
             if not best["sent"] and now_mono >= best["deadline"]:
                 best["sent"] = True
-                hd_frame = best.get("hd_frame")
+                hd_frame = None
+                try:
+                    hd_frame = best["hd_future"].result(timeout=2.0)
+                except Exception:
+                    pass
                 if hd_frame is not None:
                     snapshot = self._draw_hd(hd_frame, name, best["sim"])
                 else:
@@ -167,7 +185,7 @@ class CameraPipeline(threading.Thread):
                          hd_frame is not None)
 
     def _grab_hd_frame(self):
-        """Open HD stream, grab one frame, return it rotated (or None on failure)."""
+        """Open HD stream in background, grab one frame, return rotated (or None)."""
         if not self.rtsp_hd:
             return None
         try:
@@ -185,6 +203,14 @@ class CameraPipeline(threading.Thread):
         except Exception as e:
             log.debug("[%s] HD grab failed: %s", self.camera_name, e)
         return None
+
+    def _grab_and_save_unknown(self, low_res_frame, face):
+        """Grab HD frame in background and save unknown crop."""
+        hd = self._grab_hd_frame()
+        if hd is not None:
+            self._save_unknown(hd, face, use_full=True)
+        else:
+            self._save_unknown(low_res_frame, face, use_full=False)
 
     def _draw(self, frame, face, name, score):
         out = frame.copy()
@@ -212,7 +238,6 @@ class CameraPipeline(threading.Thread):
 
     def _save_unknown(self, frame, face, use_full=False):
         if use_full:
-            # HD frame — save full frame, face is clearly visible
             out = frame
         else:
             out = _crop_face(frame, face["bbox"])
@@ -222,4 +247,4 @@ class CameraPipeline(threading.Thread):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         path = os.path.join(self.unknown_dir, f"{self.camera_name}_{ts}.jpg")
         cv2.imwrite(path, out)
-        log.debug("[%s] saved unknown → %s (hd=%s)", self.camera_name, path, use_full)
+        log.info("[%s] saved unknown → %s (hd=%s)", self.camera_name, path, use_full)
