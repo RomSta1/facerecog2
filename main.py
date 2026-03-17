@@ -37,7 +37,6 @@ def _cleanup_snapshots(snapshot_dir, keep_hours, stop_event):
                         if os.path.isfile(fpath) and os.path.getmtime(fpath) < cutoff:
                             os.remove(fpath)
                             removed += 1
-                    # remove empty day dirs
                     try:
                         os.rmdir(day_dir)
                     except OSError:
@@ -47,6 +46,38 @@ def _cleanup_snapshots(snapshot_dir, keep_hours, stop_event):
         except Exception as e:
             log.warning("Snapshot cleanup error: %s", e)
         stop_event.wait(3600)
+
+
+def _make_pipeline(cam_name, cam_cfg, recognizer, face_db, mqtt, snap_path,
+                   cooldown_sec, stop_event):
+    t = CameraPipeline(
+        camera_name=cam_name,
+        cfg=cam_cfg,
+        recognizer=recognizer,
+        face_db=face_db,
+        mqtt_client=mqtt,
+        snapshot_dir=snap_path,
+        cooldown_sec=cooldown_sec,
+        stop_event=stop_event,
+    )
+    t.start()
+    return t
+
+
+def _watchdog(cameras_cfg, recognizer, face_db, mqtt, snap_path,
+              cooldown_sec, stop_event, threads):
+    """Restart any camera thread that has died."""
+    while not stop_event.is_set():
+        stop_event.wait(30)
+        if stop_event.is_set():
+            break
+        for cam_name, cam_cfg in cameras_cfg.items():
+            t = threads.get(cam_name)
+            if t is None or not t.is_alive():
+                log.error("[%s] thread dead — restarting", cam_name)
+                new_t = _make_pipeline(cam_name, cam_cfg, recognizer, face_db,
+                                       mqtt, snap_path, cooldown_sec, stop_event)
+                threads[cam_name] = new_t
 
 
 def main():
@@ -80,7 +111,6 @@ def main():
 
     stop_event = threading.Event()
 
-    # start snapshot cleanup thread
     keep_hours = snap_cfg.get("keep_hours", 24)
     cleanup_t = threading.Thread(
         target=_cleanup_snapshots,
@@ -89,20 +119,20 @@ def main():
     )
     cleanup_t.start()
 
-    threads = []
+    threads = {}
     for cam_name, cam_cfg in cfg["cameras"].items():
-        t = CameraPipeline(
-            camera_name=cam_name,
-            cfg=cam_cfg,
-            recognizer=recognizer,
-            face_db=face_db,
-            mqtt_client=mqtt,
-            snapshot_dir=snap_cfg["path"],
-            cooldown_sec=rec_cfg["cooldown_sec"],
-            stop_event=stop_event,
+        threads[cam_name] = _make_pipeline(
+            cam_name, cam_cfg, recognizer, face_db, mqtt,
+            snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event,
         )
-        t.start()
-        threads.append(t)
+
+    watchdog_t = threading.Thread(
+        target=_watchdog,
+        args=(cfg["cameras"], recognizer, face_db, mqtt,
+              snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event, threads),
+        daemon=True, name="watchdog",
+    )
+    watchdog_t.start()
 
     def _shutdown(sig, frame):
         log.info("Shutting down (signal %d)...", sig)
@@ -112,7 +142,7 @@ def main():
     signal.signal(signal.SIGTERM, _shutdown)
 
     stop_event.wait()
-    for t in threads:
+    for t in threads.values():
         t.join(timeout=5)
     log.info("Stopped")
     os._exit(0)

@@ -73,7 +73,10 @@ class CameraPipeline(threading.Thread):
                 if now - last_process < frame_interval:
                     continue
                 last_process = now
-                self._process(frame)
+                try:
+                    self._process(frame)
+                except Exception:
+                    log.exception("[%s] _process crashed", self.camera_name)
             cap.release()
             if not self.stop_event.is_set():
                 self.stop_event.wait(3)
@@ -101,7 +104,7 @@ class CameraPipeline(threading.Thread):
 
         for face in faces:
             name, score = self.face_db.identify(face["embedding"])
-            log.debug("[%s] det=%.2f → %s %.3f", self.camera_name, face["det_score"], name, score)
+            log.info("[%s] det=%.2f → %s %.3f", self.camera_name, face["det_score"], name, score)
 
             if name == "unknown":
                 # save crop if cooldown passed, face is clear, frontal and close enough
@@ -118,6 +121,11 @@ class CameraPipeline(threading.Thread):
                     self._save_unknown(hd if hd is not None else frame, face,
                                        use_full=hd is not None)
                     self._last_unknown = now_mono
+                else:
+                    yaw = round(pose[0], 1) if pose else None
+                    pitch = round(pose[1], 1) if pose else None
+                    log.info("[%s] unknown SKIP: w=%d frontal=%s det=%.2f yaw=%s pitch=%s",
+                             self.camera_name, face_w, frontal, face["det_score"], yaw, pitch)
                 continue
 
             last = self._last_seen.get(name)
