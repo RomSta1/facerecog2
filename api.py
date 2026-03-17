@@ -35,172 +35,167 @@ HTML = r"""<!DOCTYPE html>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-header{background:#1e293b;padding:14px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #334155;position:sticky;top:0;z-index:10}
-header h1{font-size:1.2rem;font-weight:700}
-.dot{width:9px;height:9px;border-radius:50%;background:#22c55e}
+header{background:#1e293b;padding:12px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #334155;position:sticky;top:0;z-index:10;flex-wrap:wrap}
+header h1{font-size:1.1rem;font-weight:700}
+.dot{width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0}
 .dot.off{background:#ef4444}
-main{max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:20px}
-.card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
-.card h2{font-size:.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
-/* persons */
-.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.pc{background:#0f172a;border-radius:8px;padding:12px;text-align:center;border:1px solid #334155;position:relative}
-.pc .dn{font-weight:600;font-size:.95rem;word-break:break-all}
-.pc .dc{font-size:.75rem;color:#64748b;margin-top:3px}
-.pc .dx{position:absolute;top:6px;right:6px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:.85rem;opacity:.5;line-height:1}
-.pc .dx:hover{opacity:1}
-/* enroll */
-.ef{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
-@media(max-width:600px){.ef{grid-template-columns:1fr}}
+main{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px}
+.card{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155}
+.card h2{font-size:.75rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
 label.lbl{font-size:.78rem;color:#94a3b8;display:block;margin-bottom:4px}
-input[type=text],select{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:9px 12px;border-radius:8px;font-size:.9rem;outline:none}
+input[type=text],select{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 10px;border-radius:8px;font-size:.88rem;outline:none}
 input[type=text]:focus,select:focus{border-color:#6366f1}
-.frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.fl{display:inline-block;padding:9px 14px;border-radius:8px;border:1px dashed #475569;cursor:pointer;font-size:.85rem;color:#94a3b8;white-space:nowrap}
-.fl:hover{border-color:#6366f1;color:#a5b4fc}
-#fi{display:none}
-#fn{font-size:.8rem;color:#64748b}
-.btn{padding:9px 18px;border-radius:8px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn{padding:8px 16px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
 .bp{background:#6366f1;color:#fff}.bp:hover{background:#4f46e5}
 .bg{background:#22c55e;color:#000}.bg:hover{background:#16a34a}
-.bs{padding:6px 12px;font-size:.8rem}
-.msg{padding:9px 13px;border-radius:8px;font-size:.83rem;margin-top:10px}
-.ok{background:#14532d;color:#86efac}
-.er{background:#450a0a;color:#fca5a5}
+.br{background:#450a0a;color:#fca5a5}.br:hover{background:#7f1d1d}
+.bs{padding:5px 10px;font-size:.78rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.empty{color:#475569;font-size:.83rem;padding:6px 0}
 /* snaps */
-.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;max-height:460px;overflow-y:auto}
-.sc{background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #334155;cursor:pointer}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;max-height:500px;overflow-y:auto}
+.sc{background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #334155}
 .sc:hover{border-color:#6366f1}
-.sc img{width:100%;height:115px;object-fit:cover;display:block}
-.si{padding:7px 8px;font-size:.73rem}
-.sn{font-weight:600;color:#f1f5f9;font-size:.82rem}
+.sc img{width:100%;height:110px;object-fit:cover;display:block;cursor:pointer}
+.si{padding:6px 8px;font-size:.72rem}
+.sn{font-weight:600;color:#f1f5f9;font-size:.8rem}
 .sk{color:#64748b;margin-top:2px}
-/* logs */
-.lb{background:#020617;border-radius:8px;padding:12px;font-family:monospace;font-size:.72rem;color:#94a3b8;height:200px;overflow-y:auto;white-space:pre-wrap;border:1px solid #1e293b;line-height:1.5}
-/* snap modal */
-.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;align-items:center;justify-content:center}
-.mo.on{display:flex}
-.mo img{max-width:92vw;max-height:92vh;border-radius:6px}
-.mc{position:fixed;top:12px;right:16px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1}
-/* unknown faces */
-.ug{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:380px;overflow-y:auto}
+.sact{display:flex;gap:4px;margin-top:6px;align-items:center}
+.sact select{flex:1;padding:4px 6px;font-size:.72rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:6px}
+.sact button{padding:4px 8px;border-radius:6px;border:none;font-size:.72rem;cursor:pointer;font-weight:600}
+/* unknown */
+.ug{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;max-height:360px;overflow-y:auto}
 .uc{background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #334155}
-.uc img{width:100%;height:110px;object-fit:cover;display:block;cursor:pointer}
-.ui{padding:7px 8px}
-.uk{color:#64748b;font-size:.7rem;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uc img{width:100%;height:100px;object-fit:cover;display:block;cursor:pointer}
+.ui{padding:6px 8px}
+.uk{color:#64748b;font-size:.68rem;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ua{display:flex;gap:4px;align-items:center}
-.ua select{flex:1;padding:5px 6px;font-size:.75rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:6px}
-.ua button{padding:5px 8px;border-radius:6px;border:none;font-size:.75rem;cursor:pointer;font-weight:600;white-space:nowrap}
+.ua select{flex:1;padding:4px 6px;font-size:.72rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:6px}
+.ua button{padding:4px 7px;border-radius:6px;border:none;font-size:.72rem;cursor:pointer;font-weight:600;white-space:nowrap}
 .ub{background:#6366f1;color:#fff}.ub:hover{background:#4f46e5}
 .ud{background:#334155;color:#ef4444}.ud:hover{background:#450a0a}
-/* person photos modal */
+/* persons columns */
+.cols-wrap{display:flex;gap:10px;overflow-x:auto;align-items:flex-start;padding-bottom:4px}
+.col-box{background:#0f172a;border-radius:10px;border:1px solid #334155;min-width:160px;flex:1}
+.col-hdr{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid #334155}
+.col-hdr .col-name{font-weight:700;font-size:.85rem;flex:1;cursor:default}
+.col-hdr .col-name[contenteditable=true]{cursor:text;outline:1px solid #6366f1;border-radius:4px;padding:1px 4px}
+.col-hdr button{background:none;border:none;cursor:pointer;font-size:.8rem;padding:2px 4px;border-radius:4px;color:#64748b}
+.col-hdr button:hover{background:#1e293b;color:#e2e8f0}
+.col-persons{padding:6px}
+.pcard{display:flex;align-items:center;gap:6px;padding:6px 7px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+.pcard:hover{background:#1e293b;border-color:#334155}
+.pcard .pav{font-size:1.3rem;flex-shrink:0}
+.pcard .pinfo{flex:1;min-width:0}
+.pcard .pname{font-weight:600;font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard .pcnt{font-size:.7rem;color:#64748b}
+.pcard .pdel{background:none;border:none;color:#ef4444;cursor:pointer;font-size:.78rem;opacity:0;padding:2px 4px;border-radius:4px}
+.pcard:hover .pdel{opacity:.6}
+.pcard:hover .pdel:hover{opacity:1}
+.col-add{padding:8px;display:flex;justify-content:center}
+.col-add-btn{background:#0f172a;border:1px dashed #334155;border-radius:10px;min-width:120px;padding:12px;text-align:center;cursor:pointer;color:#475569;font-size:.82rem}
+.col-add-btn:hover{border-color:#6366f1;color:#a5b4fc}
+.unassigned-hdr{font-size:.72rem;color:#475569;margin:8px 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+/* modals */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;align-items:center;justify-content:center}
+.mo.on{display:flex}
+.mo>img{max-width:92vw;max-height:92vh;border-radius:6px}
+.mc{position:fixed;top:12px;right:16px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1}
+.mdlg{background:#1e293b;border-radius:12px;padding:22px;min-width:280px;max-width:94vw;max-height:90vh;overflow-y:auto}
+.mdlg h3{font-size:.95rem;font-weight:700;margin-bottom:14px}
+/* person photos */
 .pm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:60;flex-direction:column}
 .pm.on{display:flex}
-.pmh{background:#1e293b;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #334155}
-.pmh h3{font-size:1rem;font-weight:700;flex:1}
-.phg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:16px;overflow-y:auto;flex:1}
-.ph{position:relative;background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #334155}
-.ph img{width:100%;height:130px;object-fit:cover;display:block;cursor:pointer}
-.ph .pname{padding:4px 6px;font-size:.72rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* photo preview modal */
+.pmh{background:#1e293b;padding:12px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #334155}
+.pmh h3{font-size:.95rem;font-weight:700;flex:1}
+.phg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:14px;overflow-y:auto;flex:1}
+.ph{background:#0f172a;border-radius:8px;overflow:hidden;border:1px solid #334155}
+.ph img{width:100%;height:120px;object-fit:cover;display:block;cursor:pointer}
+.ph .pname{padding:3px 6px;font-size:.68rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* photo preview */
 .pp{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:70;align-items:center;justify-content:center}
 .pp.on{display:flex}
 .pp img{max-width:92vw;max-height:88vh;border-radius:6px;object-fit:contain}
-.pp .ppdel{position:fixed;top:14px;right:56px;background:rgba(239,68,68,.9);border:none;color:#fff;border-radius:50%;width:34px;height:34px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pp .ppdel{position:fixed;top:14px;right:56px;background:rgba(239,68,68,.9);border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .pp .ppdel:hover{background:#dc2626}
-.pp .ppclose{position:fixed;top:12px;right:16px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.empty{color:#475569;font-size:.85rem;padding:8px 0}
+.pp .ppclose{position:fixed;top:10px;right:14px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1}
+/* logs modal */
+.lb{background:#020617;border-radius:8px;padding:12px;font-family:monospace;font-size:.7rem;color:#94a3b8;height:60vh;overflow-y:auto;white-space:pre-wrap;border:1px solid #1e293b;line-height:1.5;margin-top:10px}
 </style>
 </head>
 <body>
 <header>
   <div class="dot" id="dot"></div>
   <h1>FaceRecog2</h1>
-  <span id="st" style="font-size:.8rem;color:#64748b">...</span>
+  <span id="st" style="font-size:.78rem;color:#64748b">...</span>
   <div style="flex:1"></div>
-  <button class="btn bp bs" onclick="reloadDB()">↺ Перезавантажити базу</button>
+  <label style="font-size:.78rem;color:#94a3b8">Камера:</label>
+  <select id="camSel" onchange="onCamChange()" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:5px 8px;border-radius:8px;font-size:.83rem;width:auto">
+  </select>
+  <button class="btn bp bs" onclick="reloadDB()">↺ База</button>
+  <button class="btn bs" onclick="openLogs()" style="background:#334155;color:#e2e8f0">📋 Логи</button>
 </header>
 <main>
 
-<div class="card">
-  <h2>Невідомі обличчя</h2>
-  <div class="row">
-    <button class="btn bp bs" onclick="loadUnknown()">Оновити</button>
-    <span id="ucnt" style="font-size:.78rem;color:#64748b"></span>
-  </div>
-  <div class="ug" id="ug"><div class="empty">Немає невідомих облич</div></div>
-</div>
-
-<div class="card">
-  <h2>Особи в базі</h2>
-  <div class="pg" id="pg"><div class="empty">Завантаження...</div></div>
-</div>
-
-<div class="card">
-  <h2>Додати фото особи</h2>
-  <div class="ef">
-    <div>
-      <label class="lbl">Вибрати особу</label>
-      <select id="selPerson" onchange="toggleNew()">
-        <option value="">-- завантаження --</option>
-        <option value="__new__">+ Нова особа...</option>
-      </select>
-    </div>
-    <div id="newNameWrap" style="display:none">
-      <label class="lbl">Ім'я нової особи</label>
-      <input type="text" id="newName" placeholder="ім'я латиницею">
-    </div>
-    <div>
-      <label class="lbl">Фото</label>
-      <div class="frow">
-        <label class="fl" for="fi">📁 Обрати</label>
-        <input id="fi" type="file" accept="image/*" multiple onchange="onFiles()">
-        <span id="fn"></span>
-      </div>
-    </div>
-  </div>
-  <div style="margin-top:12px">
-    <button class="btn bp" onclick="doEnroll()">Додати фото</button>
-  </div>
-  <div id="em"></div>
-</div>
-
+<!-- 1. ОСТАННІ ЗНІМКИ -->
 <div class="card">
   <h2>Останні знімки</h2>
   <div class="row">
-    <select id="sf" onchange="loadSnaps()" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:8px;font-size:.85rem">
+    <select id="sf" onchange="loadSnaps()" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:5px 8px;border-radius:8px;font-size:.83rem;width:auto">
       <option value="">Всі особи</option>
     </select>
     <button class="btn bp bs" onclick="loadSnaps()">Оновити</button>
     <button class="btn bs" id="ab" onclick="toggleAuto()" style="background:#334155;color:#e2e8f0">▶ Авто</button>
-    <button class="btn bs" onclick="deleteAllSnaps()" style="background:#450a0a;color:#fca5a5;margin-left:auto">🗑 Видалити всі</button>
+    <button class="btn br bs" onclick="deleteAllSnaps()" style="margin-left:auto">🗑 Всі</button>
   </div>
   <div class="sg" id="sg"><div class="empty">Немає знімків</div></div>
 </div>
 
+<!-- 2. НЕВІДОМІ ОБЛИЧЧЯ -->
 <div class="card">
-  <h2>Логи сервісу</h2>
+  <h2>Невідомі обличчя</h2>
   <div class="row">
-    <button class="btn bp bs" onclick="loadLogs()">Оновити</button>
+    <button class="btn bp bs" onclick="loadUnknown()">Оновити</button>
+    <span id="ucnt" style="font-size:.76rem;color:#64748b"></span>
   </div>
-  <div class="lb" id="lb">...</div>
+  <div class="ug" id="ug"><div class="empty">Немає невідомих облич</div></div>
+</div>
+
+<!-- 3. ОСОБИ В БАЗІ — стовпці -->
+<div class="card">
+  <h2>Особи в базі</h2>
+  <div class="cols-wrap" id="colsWrap"></div>
 </div>
 
 </main>
+
+<!-- Image zoom modal -->
 <div class="mo" id="mo" onclick="closeMo()">
   <button class="mc" onclick="closeMo()">✕</button>
   <img id="mi" src="">
+</div>
+
+<!-- Logs modal -->
+<div class="mo" id="logsMo" onclick="closeLogsMo()" style="z-index:55;align-items:flex-start;padding:20px">
+  <div class="mdlg" style="width:min(800px,96vw)" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;margin-bottom:8px">
+      <h3 style="flex:1">📋 Логи сервісу</h3>
+      <button class="btn bp bs" onclick="loadLogs()" style="margin-right:8px">Оновити</button>
+      <button style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer" onclick="closeLogsMo()">✕</button>
+    </div>
+    <div class="lb" id="lb">...</div>
+  </div>
 </div>
 
 <!-- Person photos modal -->
 <div class="pm" id="pm">
   <div class="pmh">
     <h3 id="pmTitle">Фото особи</h3>
-    <span id="pmCount" style="font-size:.8rem;color:#64748b"></span>
+    <span id="pmCount" style="font-size:.78rem;color:#64748b"></span>
     <div style="flex:1"></div>
-    <button class="btn bp bs" style="margin-right:8px" onclick="openEnrollForPerson()">+ Додати фото</button>
-    <button class="mc" style="position:static;font-size:1.5rem" onclick="closePm()">✕</button>
+    <label class="btn bp bs" for="pmFile" style="margin-right:8px;cursor:pointer">+ Фото</label>
+    <input id="pmFile" type="file" accept="image/*" multiple style="display:none" onchange="enrollFromFiles()">
+    <button style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer" onclick="closePm()">✕</button>
   </div>
   <div class="phg" id="phg"></div>
 </div>
@@ -212,129 +207,219 @@ input[type=text]:focus,select:focus{border-color:#6366f1}
   <button class="ppclose" onclick="event.stopPropagation();closePp()">✕</button>
 </div>
 
+<!-- Enroll snapshot dialog -->
+<div class="mo" id="esDlg" onclick="closeEsDlg()" style="z-index:80">
+  <div class="mdlg" style="min-width:280px" onclick="event.stopPropagation()">
+    <h3>📥 Додати знімок до бази</h3>
+    <div style="margin-bottom:10px">
+      <label class="lbl">Особа</label>
+      <select id="esSelPerson" onchange="esToggleNew()"></select>
+    </div>
+    <div id="esNewWrap" style="display:none;margin-bottom:10px">
+      <label class="lbl">Нове ім'я (латиницею)</label>
+      <input type="text" id="esNewName" placeholder="ім'я">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn bs" onclick="closeEsDlg()" style="background:#334155;color:#e2e8f0">Скасувати</button>
+      <button class="btn bp bs" onclick="confirmEnrollSnap()">Додати</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let autoT = null;
 let persons = {};
+let currentCamera = '';
 
+// ── Groups (localStorage) ───────────────────────────────────────────────────
+const GROUPS_KEY = 'fr2_groups';
+const DEFAULT_GROUPS = [
+  {id:'family', name:'Сімя', members:[]},
+  {id:'neighbors', name:'Сусіди', members:[]},
+  {id:'strangers', name:'Бродяги', members:[]},
+];
+
+function loadGroups(){
+  try { return JSON.parse(localStorage.getItem(GROUPS_KEY)) || DEFAULT_GROUPS; }
+  catch(e){ return DEFAULT_GROUPS; }
+}
+function saveGroups(g){ localStorage.setItem(GROUPS_KEY, JSON.stringify(g)); }
+function groupOf(name){
+  return loadGroups().find(g=>g.members.includes(name));
+}
+function assignGroup(name, gid){
+  const gs = loadGroups();
+  gs.forEach(g=>{ g.members = g.members.filter(m=>m!==name); });
+  const tgt = gs.find(g=>g.id===gid);
+  if(tgt) tgt.members.push(name);
+  saveGroups(gs);
+}
+function removeFromGroups(name){
+  const gs = loadGroups();
+  gs.forEach(g=>{ g.members = g.members.filter(m=>m!==name); });
+  saveGroups(gs);
+}
+
+// ── API ─────────────────────────────────────────────────────────────────────
 async function api(url, opts){
   const r = await fetch(url, opts);
   return r.json();
 }
 
-async function loadPersons(){
+// ── Camera ──────────────────────────────────────────────────────────────────
+async function loadCameras(){
   try {
-    const d = await api('/persons');
+    const d = await api('/cameras');
+    const sel = document.getElementById('camSel');
+    sel.innerHTML = d.cameras.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(!currentCamera && d.cameras.length) currentCamera = d.cameras[0];
+    sel.value = currentCamera;
+  } catch(e){ console.error('loadCameras',e); }
+}
+function onCamChange(){
+  currentCamera = document.getElementById('camSel').value;
+  loadPersons(); loadSnaps(); loadUnknown();
+}
+
+// ── Persons + columns ────────────────────────────────────────────────────────
+async function loadPersons(){
+  if(!currentCamera) return;
+  try {
+    const d = await api('/persons?camera='+encodeURIComponent(currentCamera));
     persons = d.persons || {};
-    const pg = document.getElementById('pg');
-    const sel = document.getElementById('selPerson');
-    const sf = document.getElementById('sf');
-    const sfv = sf.value;
-
-    pg.innerHTML = '';
-    if(!Object.keys(persons).length){
-      pg.innerHTML = '<div class="empty">База порожня</div>';
-    } else {
-      for(const [n,c] of Object.entries(persons).sort()){
-        const d = document.createElement('div');
-        d.className = 'pc';
-        d.style.cursor = 'pointer';
-        d.innerHTML = `<button class="dx" onclick="event.stopPropagation();delPerson('${n}')">✕</button>
-          <div style="font-size:1.6rem;margin-bottom:6px">👤</div>
-          <div class="dn">${n}</div><div class="dc">${c} емб.</div>
-          <div style="font-size:.7rem;color:#475569;margin-top:4px">натисни → фото</div>`;
-        d.onclick = () => openPm(n);
-        pg.appendChild(d);
-      }
-    }
-
-    // rebuild person select
-    const cur = sel.value;
-    sel.innerHTML = '';
-    for(const n of Object.keys(persons).sort()){
-      sel.innerHTML += `<option value="${n}">${n}</option>`;
-    }
-    sel.innerHTML += '<option value="__new__">+ Нова особа...</option>';
-    if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
-    toggleNew();
-
-    // rebuild snap filter
-    sf.innerHTML = '<option value="">Всі особи</option>';
-    for(const n of Object.keys(persons).sort()){
-      sf.innerHTML += `<option value="${n}" ${n===sfv?'selected':''}>${n}</option>`;
-    }
+    renderColumns();
+    rebuildSnapFilter();
   } catch(e){ console.error('loadPersons',e); }
 }
 
-function toggleNew(){
-  const v = document.getElementById('selPerson').value;
-  document.getElementById('newNameWrap').style.display = v==='__new__' ? 'block' : 'none';
+function renderColumns(){
+  const wrap = document.getElementById('colsWrap');
+  const gs = loadGroups();
+  const assigned = new Set(gs.flatMap(g=>g.members));
+  const unassigned = Object.keys(persons).filter(n=>!assigned.has(n)).sort();
+
+  let html = gs.map(g=>`
+    <div class="col-box">
+      <div class="col-hdr">
+        <span class="col-name" id="cname_${g.id}">${g.name}</span>
+        <button title="Перейменувати" onclick="startRename('${g.id}')">✏️</button>
+        <button title="Видалити стовпець" onclick="deleteCol('${g.id}')">✕</button>
+      </div>
+      <div class="col-persons" id="col_${g.id}">
+        ${g.members.filter(n=>persons[n]!==undefined).map(n=>personCard(n,g.id)).join('')}
+        ${g.members.filter(n=>persons[n]!==undefined).length===0?'<div class="empty" style="padding:8px 4px">порожньо</div>':''}
+      </div>
+    </div>`).join('');
+
+  html += `<div>
+    <div class="col-add-btn" onclick="addCol()">+ Новий стовпець</div>
+    ${unassigned.length?`<div class="col-box" style="margin-top:8px;min-width:160px">
+      <div class="col-hdr"><span class="col-name" style="color:#64748b">Не призначені</span></div>
+      <div class="col-persons">${unassigned.map(n=>personCard(n,null)).join('')}</div>
+    </div>`:''}
+  </div>`;
+
+  wrap.innerHTML = html;
 }
 
-function onFiles(){
-  const files = document.getElementById('fi').files;
-  document.getElementById('fn').textContent = files.length ? `${files.length} файл(ів)` : '';
-}
-
-async function doEnroll(){
-  const sel = document.getElementById('selPerson').value;
-  const name = sel==='__new__'
-    ? document.getElementById('newName').value.trim()
-    : sel;
-  const files = document.getElementById('fi').files;
-  const msg = document.getElementById('em');
-  msg.className=''; msg.textContent='';
-
-  if(!name){ showMsg('er','Оберіть або введіть ім\'я'); return; }
-  if(!files.length){ showMsg('er','Оберіть хоча б один файл'); return; }
-
-  let ok=0, fail=0;
-  for(const file of files){
-    const fd = new FormData();
-    fd.append('image', file);
-    try {
-      const r = await fetch(`/persons/${encodeURIComponent(name)}/enroll`,{method:'POST',body:fd});
-      const d = await r.json();
-      if(r.ok) ok++;
-      else { fail++; console.warn(d); }
-    } catch(e){ fail++; }
+function personCard(name, gid){
+  const cnt = persons[name] || 0;
+  // assigned: show remove-from-group button
+  if(gid){
+    return `<div class="pcard" onclick="openPm('${name}')">
+      <span class="pav">👤</span>
+      <div class="pinfo">
+        <div class="pname">${name}</div>
+        <div class="pcnt">${cnt} емб.</div>
+      </div>
+      <button class="pdel" title="Прибрати з групи" onclick="event.stopPropagation();removeFromGroups('${name}');renderColumns()">✕</button>
+    </div>`;
   }
-
-  if(ok) showMsg('ok', `✓ Додано ${ok} фото${fail?' ('+fail+' не вдалось)':''}. Ембедінгів: ?`);
-  else showMsg('er','✗ Жодне фото не прийнято — обличчя не виявлено');
-  loadPersons();
-  document.getElementById('fi').value='';
-  document.getElementById('fn').textContent='';
+  // unassigned: show group assign buttons
+  const gs = loadGroups();
+  const btns = gs.map(g=>`<button style="padding:2px 6px;border-radius:5px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.68rem;cursor:pointer;white-space:nowrap"
+    onclick="event.stopPropagation();assignGroup('${name}','${g.id}');renderColumns()">${g.name}</button>`).join('');
+  return `<div class="pcard" onclick="openPm('${name}')">
+    <span class="pav">👤</span>
+    <div class="pinfo">
+      <div class="pname">${name}</div>
+      <div class="pcnt">${cnt} емб.</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${btns}</div>
+    </div>
+    <button class="pdel" title="Видалити з бази" onclick="event.stopPropagation();delPerson('${name}')">🗑</button>
+  </div>`;
 }
 
-function showMsg(cls,txt){
-  const m=document.getElementById('em');
-  m.className='msg '+cls; m.textContent=txt;
-  setTimeout(()=>{m.className='';m.textContent='';},5000);
+function startRename(gid){
+  const el = document.getElementById('cname_'+gid);
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+  el.onblur = ()=>{
+    const gs = loadGroups();
+    const g = gs.find(x=>x.id===gid);
+    if(g){ g.name = el.textContent.trim() || g.name; saveGroups(gs); }
+    el.contentEditable='false';
+    renderColumns();
+  };
+  el.onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } };
 }
 
+function deleteCol(gid){
+  if(!confirm('Видалити стовпець? Особи стануть "не призначеними"')) return;
+  const gs = loadGroups().filter(g=>g.id!==gid);
+  saveGroups(gs);
+  renderColumns();
+}
+
+function addCol(){
+  const name = prompt('Назва нового стовпця:','');
+  if(!name) return;
+  const gs = loadGroups();
+  gs.push({id:'col_'+Date.now(), name:name.trim(), members:[]});
+  saveGroups(gs);
+  renderColumns();
+}
+
+function rebuildSnapFilter(){
+  const sf = document.getElementById('sf');
+  const cur = sf.value;
+  sf.innerHTML = '<option value="">Всі особи</option>';
+  for(const n of Object.keys(persons).sort()){
+    sf.innerHTML += `<option value="${n}" ${n===cur?'selected':''}>${n}</option>`;
+  }
+}
+
+// ── Persons CRUD ─────────────────────────────────────────────────────────────
 async function delPerson(name){
-  if(!confirm(`Видалити ${name} з бази?`)) return;
-  await api('/persons/'+name,{method:'DELETE'});
+  if(!confirm(`Видалити ${name} з бази ${currentCamera}?`)) return;
+  await api('/persons/'+name+'?camera='+encodeURIComponent(currentCamera),{method:'DELETE'});
+  removeFromGroups(name);
   loadPersons();
 }
-
 async function reloadDB(){
-  await api('/reload',{method:'POST'});
+  await api('/reload?camera='+encodeURIComponent(currentCamera),{method:'POST'});
   setTimeout(loadPersons,300);
 }
 
+// ── Snapshots ────────────────────────────────────────────────────────────────
 async function loadSnaps(){
   const f = document.getElementById('sf').value;
   try {
-    const d = await api('/snapshots?person='+encodeURIComponent(f));
+    const d = await api('/snapshots?person='+encodeURIComponent(f)+'&camera='+encodeURIComponent(currentCamera));
     const sg = document.getElementById('sg');
-    if(!d.snapshots||!d.snapshots.length){
-      sg.innerHTML='<div class="empty">Немає знімків</div>'; return;
-    }
+    if(!d.snapshots||!d.snapshots.length){ sg.innerHTML='<div class="empty">Немає знімків</div>'; return; }
     sg.innerHTML = d.snapshots.map(s=>`
-      <div class="sc" onclick="openMo('/snapshots/img?path=${encodeURIComponent(s.path)}')">
-        <img src="/snapshots/img?path=${encodeURIComponent(s.path)}" loading="lazy" onerror="this.style.display='none'">
-        <div class="si"><div class="sn">${s.name}</div><div class="sk">${s.camera} · ${s.time}</div></div>
+      <div class="sc">
+        <img src="/snapshots/img?path=${encodeURIComponent(s.path)}" loading="lazy" onerror="this.style.display='none'" onclick="openMo('/snapshots/img?path=${encodeURIComponent(s.path)}')">
+        <div class="si">
+          <div class="sn">${s.name}</div>
+          <div class="sk">${s.camera} · ${s.time}</div>
+          <button class="btn bp bs" style="margin-top:5px;width:100%;font-size:.72rem;padding:4px 8px" onclick="openEnrollSnapDlg('${s.name}','${s.path}',this)">📥 В базу</button>
+        </div>
       </div>`).join('');
   } catch(e){ console.error('loadSnaps',e); }
 }
@@ -342,10 +427,11 @@ async function loadSnaps(){
 function openMo(src){ document.getElementById('mi').src=src; document.getElementById('mo').classList.add('on'); }
 function closeMo(){ document.getElementById('mo').classList.remove('on'); }
 
+// ── Person photos modal ──────────────────────────────────────────────────────
 let pmPerson = '';
 async function openPm(name){
   pmPerson = name;
-  document.getElementById('pmTitle').textContent = '👤 ' + name;
+  document.getElementById('pmTitle').textContent = '👤 ' + name + ' · ' + currentCamera;
   document.getElementById('pm').classList.add('on');
   await loadPmPhotos();
 }
@@ -353,70 +439,167 @@ function closePm(){ document.getElementById('pm').classList.remove('on'); pmPers
 
 async function loadPmPhotos(){
   const g = document.getElementById('phg');
-  g.innerHTML = '<div class="empty">Завантаження...</div>';
-  const d = await api(`/persons/${pmPerson}/photos/list`);
-  if(!d.files||!d.files.length){ g.innerHTML='<div class="empty">Фото відсутні</div>'; return; }
+  g.innerHTML = '<div class="empty" style="padding:16px">Завантаження...</div>';
+  const d = await api(`/persons/${pmPerson}/photos/list?camera=${encodeURIComponent(currentCamera)}`);
+  if(!d.files||!d.files.length){ g.innerHTML='<div class="empty" style="padding:16px">Фото відсутні</div>'; return; }
   document.getElementById('pmCount').textContent = d.files.length + ' фото';
   g.innerHTML = d.files.map(f=>`
     <div class="ph">
-      <img src="/persons/${pmPerson}/photos/${encodeURIComponent(f)}/img"
-           onclick="openPp('/persons/${pmPerson}/photos/${encodeURIComponent(f)}/img','${f}')"
+      <img src="/persons/${pmPerson}/photos/${encodeURIComponent(f)}/img?camera=${encodeURIComponent(currentCamera)}"
+           onclick="openPp('/persons/${pmPerson}/photos/${encodeURIComponent(f)}/img?camera=${encodeURIComponent(currentCamera)}','${f}')"
            onerror="this.style.display='none'">
       <div class="pname">${f}</div>
     </div>`).join('');
 }
 
+async function enrollFromFiles(){
+  const files = document.getElementById('pmFile').files;
+  if(!files.length) return;
+  let ok=0, fail=0;
+  for(const file of files){
+    const fd = new FormData();
+    fd.append('image', file);
+    try {
+      const r = await fetch(`/persons/${encodeURIComponent(pmPerson)}/enroll?camera=${encodeURIComponent(currentCamera)}`,{method:'POST',body:fd});
+      if(r.ok) ok++; else fail++;
+    } catch(e){ fail++; }
+  }
+  document.getElementById('pmFile').value='';
+  if(ok) showToast(`✓ Додано ${ok} фото`);
+  else showToast('✗ Обличчя не знайдено', true);
+  await loadPmPhotos();
+  loadPersons();
+}
+
 let ppFile = '';
-function openPp(src, fname){
-  ppFile = fname;
-  document.getElementById('ppImg').src = src;
-  document.getElementById('pp').classList.add('on');
-}
-function closePp(){
-  document.getElementById('pp').classList.remove('on');
-  ppFile = '';
-}
+function openPp(src, fname){ ppFile=fname; document.getElementById('ppImg').src=src; document.getElementById('pp').classList.add('on'); }
+function closePp(){ document.getElementById('pp').classList.remove('on'); ppFile=''; }
 async function deletePpPhoto(){
-  const fname = ppFile;
-  if(!fname || !confirm(`Видалити ${fname}?`)) return;
+  const fname=ppFile;
+  if(!fname||!confirm(`Видалити ${fname}?`)) return;
   closePp();
-  await api(`/persons/${pmPerson}/photos/${encodeURIComponent(fname)}`,{method:'DELETE'});
-  await loadPmPhotos();
-  loadPersons();
+  await api(`/persons/${pmPerson}/photos/${encodeURIComponent(fname)}?camera=${encodeURIComponent(currentCamera)}`,{method:'DELETE'});
+  await loadPmPhotos(); loadPersons();
 }
 
-async function delPhoto(fname){
+// ── Enroll snapshot dialog ───────────────────────────────────────────────────
+let _esDlgPath='', _esDlgBtn=null;
+
+function openEnrollSnapDlg(suggestedName, path, btn){
+  _esDlgPath=path; _esDlgBtn=btn;
+  const sel=document.getElementById('esSelPerson');
+  const pnames=Object.keys(persons).sort();
+  sel.innerHTML=pnames.map(p=>`<option value="${p}" ${p===suggestedName?'selected':''}>${p}</option>`).join('');
+  sel.innerHTML+='<option value="__new__">+ Нова особа...</option>';
+  if(!pnames.includes(suggestedName)) sel.value='__new__';
+  esToggleNew();
+  document.getElementById('esDlg').classList.add('on');
+}
+function closeEsDlg(){ document.getElementById('esDlg').classList.remove('on'); _esDlgPath=''; _esDlgBtn=null; }
+function esToggleNew(){
+  const v=document.getElementById('esSelPerson').value;
+  document.getElementById('esNewWrap').style.display=v==='__new__'?'block':'none';
+  if(v==='__new__') document.getElementById('esNewName').focus();
+}
+async function confirmEnrollSnap(){
+  const sel=document.getElementById('esSelPerson').value;
+  const name=sel==='__new__'?document.getElementById('esNewName').value.trim():sel;
+  if(!name){ showToast('Введіть імʼя',true); return; }
+  closeEsDlg();
+  if(_esDlgBtn){ _esDlgBtn.disabled=true; _esDlgBtn.textContent='...'; }
+  try {
+    const r=await fetch(`/persons/${encodeURIComponent(name)}/enroll_snapshot?path=${encodeURIComponent(_esDlgPath)}&camera=${encodeURIComponent(currentCamera)}`,{method:'POST'});
+    const d=await r.json();
+    if(r.ok){ if(_esDlgBtn){_esDlgBtn.textContent='✓';_esDlgBtn.style.background='#22c55e';_esDlgBtn.style.color='#000';} showToast(`✓ ${name}: додано`); loadPersons(); }
+    else { if(_esDlgBtn){_esDlgBtn.disabled=false;_esDlgBtn.textContent='📥';} showToast('✗ '+(d.error||'Помилка'),true); }
+  } catch(e){ if(_esDlgBtn){_esDlgBtn.disabled=false;_esDlgBtn.textContent='📥';} showToast('✗ '+e.message,true); }
+}
+
+// ── Unknown ──────────────────────────────────────────────────────────────────
+async function loadUnknown(){
+  try {
+    const d = await api('/unknown');
+    const ug = document.getElementById('ug');
+    const files = d.files || [];
+    document.getElementById('ucnt').textContent = files.length ? files.length+' фото' : '';
+    if(!files.length){ ug.innerHTML='<div class="empty">Немає невідомих облич</div>'; return; }
+    const pnames = Object.keys(persons).sort();
+    ug.innerHTML = files.map((f,i)=>{
+      const opts = pnames.map(p=>`<option value="${p}">${p}</option>`).join('');
+      return `<div class="uc">
+        <img src="/unknown/${encodeURIComponent(f)}/img" onclick="openMo(this.src)" onerror="this.parentElement.remove()">
+        <div class="ui">
+          <div class="uk">${f}</div>
+          <div class="ua">
+            <select id="us${i}" onchange="toggleNewUn(${i})">
+              ${opts}
+              <option value="__new__">+ Нова особа...</option>
+            </select>
+            <button class="ub" onclick="assignUnknown('${f}',${i})">→</button>
+            <button class="ud" onclick="deleteUnknown('${f}')">✕</button>
+          </div>
+          <input type="text" id="un${i}" placeholder="ім'я латиницею"
+            style="display:${pnames.length===0?'block':'none'};margin-top:5px;width:100%;padding:4px 7px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.77rem">
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('loadUnknown',e); }
+}
+
+function toggleNewUn(i){
+  const v=document.getElementById('us'+i).value;
+  document.getElementById('un'+i).style.display=v==='__new__'?'block':'none';
+}
+
+async function assignUnknown(fname, i){
+  const sel=document.getElementById('us'+i);
+  if(!sel) return;
+  let person=sel.value;
+  if(person==='__new__'){
+    person=(document.getElementById('un'+i).value||'').trim();
+    if(!person){ alert("Введіть ім'я"); return; }
+  }
+  try {
+    const r=await fetch(`/unknown/${encodeURIComponent(fname)}/assign?person=${encodeURIComponent(person)}&camera=${encodeURIComponent(currentCamera)}`,{method:'POST'});
+    const d=await r.json();
+    if(r.ok){ showToast(d.warning?`⚠ ${person}: без ембедінгу`:`✓ ${person}: додано`); loadUnknown(); loadPersons(); }
+    else showToast('✗ '+(d.error||'Помилка'),true);
+  } catch(e){ showToast('✗ '+e.message,true); }
+}
+
+async function deleteUnknown(fname){
   if(!confirm(`Видалити ${fname}?`)) return;
-  const r = await api(`/persons/${pmPerson}/photos/${encodeURIComponent(fname)}`,{method:'DELETE'});
-  await loadPmPhotos();
-  loadPersons();
+  await api(`/unknown/${encodeURIComponent(fname)}`,{method:'DELETE'});
+  loadUnknown();
 }
 
-function openEnrollForPerson(){
-  closePm();
-  const sel = document.getElementById('selPerson');
-  if([...sel.options].some(o=>o.value===pmPerson)) sel.value=pmPerson;
-  document.getElementById('newNameWrap').style.display='none';
-  document.querySelector('.card:nth-child(2)').scrollIntoView({behavior:'smooth'});
-}
-
+// ── Snaps misc ───────────────────────────────────────────────────────────────
 async function deleteAllSnaps(){
   if(!confirm('Видалити всі знімки?')) return;
-  const r = await fetch('/snapshots',{method:'DELETE'});
-  const d = await r.json();
+  const r=await fetch('/snapshots',{method:'DELETE'});
+  const d=await r.json();
   showToast(`🗑 Видалено ${d.removed} знімків`);
   loadSnaps();
 }
+function toggleAuto(){
+  const btn=document.getElementById('ab');
+  if(autoT){ clearInterval(autoT); autoT=null; btn.textContent='▶ Авто'; btn.style.background='#334155'; }
+  else { autoT=setInterval(()=>{ loadSnaps(); },5000); btn.textContent='⏹ Стоп'; btn.style.background='#dc2626'; }
+}
 
+// ── Logs ──────────────────────────────────────────────────────────────────────
+function openLogs(){ document.getElementById('logsMo').classList.add('on'); loadLogs(); }
+function closeLogsMo(){ document.getElementById('logsMo').classList.remove('on'); }
 async function loadLogs(){
   try {
-    const d = await api('/logs');
-    const lb = document.getElementById('lb');
-    lb.textContent = d.lines||'(порожньо)';
-    lb.scrollTop = lb.scrollHeight;
+    const d=await api('/logs');
+    const lb=document.getElementById('lb');
+    lb.textContent=d.lines||'(порожньо)';
+    lb.scrollTop=lb.scrollHeight;
   } catch(e){}
 }
 
+// ── Health ───────────────────────────────────────────────────────────────────
 async function checkHealth(){
   try {
     await api('/health');
@@ -428,71 +611,9 @@ async function checkHealth(){
   }
 }
 
-function toggleAuto(){
-  const btn=document.getElementById('ab');
-  if(autoT){ clearInterval(autoT); autoT=null; btn.textContent='▶ Авто'; btn.style.background='#334155'; }
-  else { autoT=setInterval(()=>{loadSnaps();loadLogs();},5000); btn.textContent='⏹ Стоп'; btn.style.background='#dc2626'; }
-}
-
-async function loadUnknown(){
-  try {
-    const d = await api('/unknown');
-    const ug = document.getElementById('ug');
-    const files = d.files || [];
-    document.getElementById('ucnt').textContent = files.length ? files.length+' фото' : '';
-    if(!files.length){ ug.innerHTML='<div class="empty">Немає невідомих облич</div>'; return; }
-    const pnames = Object.keys(persons).sort();
-    ug.innerHTML = files.map((f,i)=>{
-      const opts = pnames.map(p=>`<option value="${p}">${p}</option>`).join('');
-      const noPersons = pnames.length === 0;
-      return `<div class="uc">
-        <img src="/unknown/${encodeURIComponent(f)}/img" onclick="openMo(this.src)" onerror="this.parentElement.remove()">
-        <div class="ui">
-          <div class="uk">${f}</div>
-          <div class="ua">
-            <select id="us${i}" onchange="toggleNewUn(${i})">
-              ${opts}
-              <option value="__new__">+ Нова особа...</option>
-            </select>
-            <button class="ua ub" onclick="assignUnknown('${f}',${i})">→</button>
-            <button class="ua ud" onclick="deleteUnknown('${f}')">✕</button>
-          </div>
-          <input type="text" id="un${i}" placeholder="ім'я латиницею"
-            style="display:${noPersons?'block':'none'};margin-top:5px;width:100%;padding:5px 8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.8rem">
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e){ console.error('loadUnknown',e); }
-}
-
-function toggleNewUn(i){
-  const sel = document.getElementById('us'+i);
-  const inp = document.getElementById('un'+i);
-  inp.style.display = sel.value==='__new__' ? 'block' : 'none';
-}
-
-async function assignUnknown(fname, i){
-  const sel = document.getElementById('us'+i);
-  if(!sel) return;
-  let person = sel.value;
-  if(person === '__new__'){
-    person = (document.getElementById('un'+i).value||'').trim();
-    if(!person){ alert("Введіть ім'я"); return; }
-  }
-  try {
-    const r = await fetch(`/unknown/${encodeURIComponent(fname)}/assign?person=${encodeURIComponent(person)}`,{method:'POST'});
-    const d = await r.json();
-    if(r.ok){
-      showToast(d.warning ? `⚠ ${person}: збережено без ембедінгу` : `✓ ${person}: додано`);
-      loadUnknown(); loadPersons();
-    } else {
-      showToast('✗ ' + (d.error||'Помилка'), true);
-    }
-  } catch(e){ showToast('✗ ' + e.message, true); }
-}
-
-function showToast(msg, err){
-  let t = document.getElementById('toast');
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg,err){
+  let t=document.getElementById('toast');
   if(!t){ t=document.createElement('div'); t.id='toast';
     t.style='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:.85rem;font-weight:600;z-index:999;transition:opacity .3s';
     document.body.appendChild(t); }
@@ -501,29 +622,27 @@ function showToast(msg, err){
   clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',3000);
 }
 
-async function deleteUnknown(fname){
-  if(!confirm(`Видалити ${fname}?`)) return;
-  await api(`/unknown/${encodeURIComponent(fname)}`,{method:'DELETE'});
-  loadUnknown();
-}
-
+// ── Init ─────────────────────────────────────────────────────────────────────
 checkHealth();
-loadPersons();
-loadSnaps();
-loadLogs();
-loadUnknown();
+loadCameras().then(()=>{ loadPersons(); loadSnaps(); loadUnknown(); });
 setInterval(checkHealth,15000);
 </script>
 </body>
 </html>"""
 
 
-def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
+def create_app(face_dbs, snapshot_dir=SNAPSHOT_DIR, cameras=None):
+    """face_dbs: dict {camera_name: FaceDB}"""
     app = Flask(__name__)
     unknown_dir = os.path.join(os.path.dirname(snapshot_dir), "unknown")
     _rebuild_lock = threading.Lock()
+    _cam_names = list(face_dbs.keys())
 
-    def _rebuild_bg(name):
+    def _db(request):
+        cam = request.args.get("camera", _cam_names[0] if _cam_names else "")
+        return face_dbs.get(cam) or face_dbs[_cam_names[0]]
+
+    def _rebuild_bg(face_db, name):
         if _rebuild_lock.acquire(blocking=False):
             try:
                 face_db.rebuild_person(name)
@@ -534,13 +653,17 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
     def index():
         return Response(HTML, mimetype="text/html; charset=utf-8")
 
+    @app.route("/cameras", methods=["GET"])
+    def list_cameras():
+        return jsonify({"cameras": _cam_names})
+
     @app.route("/persons", methods=["GET"])
     def list_persons():
-        return jsonify({"persons": face_db.list_persons()})
+        return jsonify({"persons": _db(request).list_persons()})
 
     @app.route("/persons/<name>", methods=["DELETE"])
     def delete_person(name):
-        ok = face_db.delete_person(name)
+        ok = _db(request).delete_person(name)
         if ok:
             return jsonify({"status": "deleted", "name": name})
         return jsonify({"error": "not found"}), 404
@@ -554,18 +677,18 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
         img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
         if img is None:
             return jsonify({"error": "cannot decode image"}), 400
-        count = face_db.enroll(name, img)
+        count = _db(request).enroll(name, img)
         if count == 0:
             return jsonify({"error": "no face detected"}), 422
         return jsonify({"status": "enrolled", "name": name, "total": count})
 
     @app.route("/persons/<name>/photos", methods=["GET"])
     def list_photos(name):
-        return jsonify({"name": name, "photos": face_db.photo_count(name)})
+        return jsonify({"name": name, "photos": _db(request).photo_count(name)})
 
     @app.route("/persons/<name>/photos/list", methods=["GET"])
     def list_photo_files(name):
-        person_dir = os.path.join(face_db.faces_dir, name)
+        person_dir = os.path.join(_db(request).faces_dir, name)
         if not os.path.isdir(person_dir):
             return jsonify({"error": "not found"}), 404
         files = sorted(f for f in os.listdir(person_dir) if f.lower().endswith((".jpg", ".jpeg", ".png")))
@@ -573,22 +696,22 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
 
     @app.route("/persons/<name>/photos/<fname>", methods=["DELETE"])
     def delete_photo(name, fname):
-        person_dir = os.path.join(face_db.faces_dir, name)
+        db = _db(request)
+        person_dir = os.path.join(db.faces_dir, name)
         path = os.path.join(person_dir, fname)
-        # safety: must be inside person_dir
         if not os.path.realpath(path).startswith(os.path.realpath(person_dir)):
             return jsonify({"error": "forbidden"}), 403
         if not os.path.isfile(path):
             return jsonify({"error": "not found"}), 404
         os.remove(path)
-        threading.Thread(target=_rebuild_bg, args=(name,), daemon=True).start()
+        threading.Thread(target=_rebuild_bg, args=(db, name,), daemon=True).start()
         remaining = len([f for f in os.listdir(person_dir)
                          if f.lower().endswith((".jpg", ".jpeg", ".png"))])
         return jsonify({"status": "deleted", "remaining": remaining})
 
     @app.route("/persons/<name>/photos/<fname>/img", methods=["GET"])
     def photo_img(name, fname):
-        person_dir = os.path.join(face_db.faces_dir, name)
+        person_dir = os.path.join(_db(request).faces_dir, name)
         path = os.path.join(person_dir, fname)
         if not os.path.realpath(path).startswith(os.path.realpath(person_dir)):
             return "", 403
@@ -628,10 +751,11 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
         img = cv2.imread(src)
         if img is None:
             return jsonify({"error": "cannot decode image"}), 400
-        count = face_db.enroll(person, img)
+        db = _db(request)
+        count = db.enroll(person, img)
         # move file to person folder regardless of enrollment result
         import shutil
-        person_dir = os.path.join(face_db.faces_dir, person)
+        person_dir = os.path.join(db.faces_dir, person)
         os.makedirs(person_dir, exist_ok=True)
         dst = os.path.join(person_dir, os.path.basename(src))
         shutil.move(src, dst)
@@ -649,9 +773,24 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
         os.remove(path)
         return jsonify({"status": "deleted"})
 
+    @app.route("/persons/<name>/enroll_snapshot", methods=["POST"])
+    def enroll_snapshot(name):
+        path = request.args.get("path", "")
+        if not os.path.realpath(path).startswith(os.path.realpath(snapshot_dir)):
+            return jsonify({"error": "invalid path"}), 400
+        if not os.path.isfile(path):
+            return jsonify({"error": "file not found"}), 404
+        img = cv2.imread(path)
+        if img is None:
+            return jsonify({"error": "cannot decode image"}), 400
+        count = _db(request).enroll(name, img)
+        if count == 0:
+            return jsonify({"error": "no face detected in snapshot"}), 422
+        return jsonify({"status": "enrolled", "name": name, "total": count})
+
     @app.route("/reload", methods=["POST"])
     def reload_db():
-        face_db.reload()
+        _db(request).reload()
         return jsonify({"status": "reloaded"})
 
     @app.route("/health", methods=["GET"])
@@ -733,11 +872,29 @@ def create_app(face_db, snapshot_dir=SNAPSHOT_DIR, cameras=None):
         threading.Thread(target=cam.trigger, daemon=True).start()
         return jsonify({"status": "triggered", "camera": camera_name}), 202
 
+    @app.route("/latest/<camera_name>")
+    def latest_snapshot(camera_name):
+        """Return the most recent snapshot JPEG for a camera (for HA picture card)."""
+        day_dirs = sorted([
+            d for d in os.listdir(snapshot_dir)
+            if os.path.isdir(os.path.join(snapshot_dir, d))
+        ], reverse=True)
+        for day in day_dirs:
+            day_path = os.path.join(snapshot_dir, day)
+            files = sorted([
+                f for f in os.listdir(day_path)
+                if f.startswith(camera_name) and f.endswith(".jpg")
+            ], reverse=True)
+            if files:
+                path = os.path.join(day_path, files[0])
+                return send_file(path, mimetype="image/jpeg")
+        return Response(status=404)
+
     return app
 
 
-def run_api(face_db, host, port, snapshot_dir=SNAPSHOT_DIR, cameras=None):
-    flask_app = create_app(face_db, snapshot_dir, cameras)
+def run_api(face_dbs, host, port, snapshot_dir=SNAPSHOT_DIR, cameras=None):
+    flask_app = create_app(face_dbs, snapshot_dir, cameras)
     t = threading.Thread(
         target=lambda: flask_app.run(host=host, port=port, debug=False, use_reloader=False),
         daemon=True,

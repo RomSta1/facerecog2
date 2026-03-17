@@ -55,6 +55,7 @@ class CameraPipeline(threading.Thread):
         self._best = {}             # name -> {score, sim, frame, face, hd_future, deadline, sent}
         self._last_unknown = 0.0   # monotonic (unknown saves)
         self._best_shot_window = 4.0  # seconds to collect best frame
+        self._last_frame = None      # most recent rotated frame from run() loop
         # HD grabs run in a background thread so they never block the detection loop
         self._hd_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1,
                                                                    thread_name_prefix=f"hd-{camera_name}")
@@ -62,8 +63,10 @@ class CameraPipeline(threading.Thread):
     def run(self):
         log.info("[%s] starting %s", self.camera_name, self.rtsp)
         frame_interval = 1.0 / self.fps_process
+        # force TCP transport to avoid HEVC/H.265 packet loss over UDP
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
         while not self.stop_event.is_set():
-            cap = cv2.VideoCapture(self.rtsp)
+            cap = cv2.VideoCapture(self.rtsp, cv2.CAP_FFMPEG)
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             if not cap.isOpened():
                 log.error("[%s] cannot open stream, retrying in 10s", self.camera_name)
@@ -80,6 +83,7 @@ class CameraPipeline(threading.Thread):
                 if now - last_process < frame_interval:
                     continue
                 last_process = now
+                self._last_frame = self._rotate(frame)  # store rotated for trigger()
                 try:
                     self._process(frame)
                 except Exception:
@@ -185,29 +189,30 @@ class CameraPipeline(threading.Thread):
                          hd_frame is not None)
 
     def trigger(self):
-        """Force immediate recognition — called by Home Assistant on motion detection."""
+        """Force immediate recognition — grabs fresh frames from stream, no stale cache."""
         log.info("[%s] triggered by external event", self.camera_name)
-        frame = self._grab_hd_frame()
-        if frame is None:
-            # fallback to low-res stream
-            try:
-                cap = cv2.VideoCapture(self.rtsp)
-                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                for _ in range(10):
-                    ret, f = cap.read()
-                    if ret:
-                        frame = self._rotate(f)
-                        break
-                cap.release()
-            except Exception:
-                log.exception("[%s] trigger: failed to grab frame", self.camera_name)
-        if frame is None:
-            log.warning("[%s] trigger: no frame available", self.camera_name)
-            return
         try:
-            self._process_raw(frame)
+            cap = cv2.VideoCapture(self.rtsp, cv2.CAP_FFMPEG)
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            found = False
+            # grab up to 10 fresh frames, process each until face found
+            for i in range(10):
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame = self._rotate(frame)
+                cv2.imwrite(f"/tmp/trigger_{self.camera_name}.jpg", frame)
+                faces = self.recognizer.get_faces(apply_clahe(frame))
+                log.info("[%s] trigger frame %d: %d faces", self.camera_name, i, len(faces))
+                if faces:
+                    self._process_raw(frame)
+                    found = True
+                    break
+            cap.release()
+            if not found:
+                log.info("[%s] trigger: no faces in any frame", self.camera_name)
         except Exception:
-            log.exception("[%s] trigger: _process_raw crashed", self.camera_name)
+            log.exception("[%s] trigger crashed", self.camera_name)
 
     def _process_raw(self, frame):
         """Run recognition on an already-rotated frame (used by trigger)."""
@@ -245,7 +250,7 @@ class CameraPipeline(threading.Thread):
         if not self.rtsp_hd:
             return None
         try:
-            cap = cv2.VideoCapture(self.rtsp_hd)
+            cap = cv2.VideoCapture(self.rtsp_hd, cv2.CAP_FFMPEG)
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             frame = None
             for _ in range(10):

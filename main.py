@@ -48,6 +48,21 @@ def _cleanup_snapshots(snapshot_dir, keep_hours, stop_event):
         stop_event.wait(3600)
 
 
+def _make_face_db(cam_name, db_cfg, rec_cfg):
+    """Create a FaceDB instance for a specific camera."""
+    faces_dir = os.path.join(db_cfg["path"], cam_name)
+    cache_base, cache_ext = os.path.splitext(db_cfg["cache"])
+    cache_path = f"{cache_base}_{cam_name}{cache_ext}"
+    os.makedirs(faces_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    return FaceDB(
+        faces_dir=faces_dir,
+        cache_path=cache_path,
+        similarity_threshold=rec_cfg["similarity_threshold"],
+        unknown_threshold=rec_cfg["unknown_threshold"],
+    )
+
+
 def _make_pipeline(cam_name, cam_cfg, recognizer, face_db, mqtt, snap_path,
                    cooldown_sec, stop_event):
     t = CameraPipeline(
@@ -64,7 +79,7 @@ def _make_pipeline(cam_name, cam_cfg, recognizer, face_db, mqtt, snap_path,
     return t
 
 
-def _watchdog(cameras_cfg, recognizer, face_db, mqtt, snap_path,
+def _watchdog(cameras_cfg, recognizer, face_dbs, mqtt, snap_path,
               cooldown_sec, stop_event, threads):
     """Restart any camera thread that has died."""
     while not stop_event.is_set():
@@ -75,8 +90,9 @@ def _watchdog(cameras_cfg, recognizer, face_db, mqtt, snap_path,
             t = threads.get(cam_name)
             if t is None or not t.is_alive():
                 log.error("[%s] thread dead — restarting", cam_name)
-                new_t = _make_pipeline(cam_name, cam_cfg, recognizer, face_db,
-                                       mqtt, snap_path, cooldown_sec, stop_event)
+                new_t = _make_pipeline(cam_name, cam_cfg, recognizer,
+                                       face_dbs[cam_name], mqtt,
+                                       snap_path, cooldown_sec, stop_event)
                 threads[cam_name] = new_t
 
 
@@ -91,14 +107,11 @@ def main():
     mqtt_cfg = cfg["mqtt"]
 
     os.makedirs(snap_cfg["path"], exist_ok=True)
-    os.makedirs(os.path.dirname(db_cfg["cache"]), exist_ok=True)
 
-    face_db = FaceDB(
-        faces_dir=db_cfg["path"],
-        cache_path=db_cfg["cache"],
-        similarity_threshold=rec_cfg["similarity_threshold"],
-        unknown_threshold=rec_cfg["unknown_threshold"],
-    )
+    # one FaceDB per camera — separate faces dirs and cache files
+    face_dbs = {}
+    for cam_name in cfg["cameras"]:
+        face_dbs[cam_name] = _make_face_db(cam_name, db_cfg, rec_cfg)
 
     recognizer = Recognizer(
         det_score_min=rec_cfg["det_score_min"],
@@ -109,7 +122,7 @@ def main():
 
     # cameras dict is passed to run_api so /trigger endpoint can reach pipelines
     cameras = {}
-    run_api(face_db, api_cfg["host"], api_cfg["port"], snap_cfg["path"], cameras)
+    run_api(face_dbs, api_cfg["host"], api_cfg["port"], snap_cfg["path"], cameras)
 
     stop_event = threading.Event()
 
@@ -124,14 +137,14 @@ def main():
     threads = {}
     for cam_name, cam_cfg in cfg["cameras"].items():
         threads[cam_name] = _make_pipeline(
-            cam_name, cam_cfg, recognizer, face_db, mqtt,
+            cam_name, cam_cfg, recognizer, face_dbs[cam_name], mqtt,
             snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event,
         )
-        cameras[cam_name] = threads[cam_name]  # expose to /trigger endpoint
+        cameras[cam_name] = threads[cam_name]
 
     watchdog_t = threading.Thread(
         target=_watchdog,
-        args=(cfg["cameras"], recognizer, face_db, mqtt,
+        args=(cfg["cameras"], recognizer, face_dbs, mqtt,
               snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event, threads),
         daemon=True, name="watchdog",
     )
