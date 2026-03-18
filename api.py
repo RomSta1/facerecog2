@@ -677,36 +677,7 @@ function renderSettings(d){
   const camNames = Object.keys(cameras);
 
   const tabs = camNames.map((c,i)=>`<button class="cfg-tab${i===0?' active':''}" id="ctab_${c}" onclick="cfgTab('${c}')">${c}</button>`).join('');
-  const camSections = camNames.map((c,i)=>{
-    const cc = cameras[c] || {};
-    const g = cc.gesture || {};
-    return `<div class="cfg-cam${i===0?' active':''}" id="ccam_${c}">
-      <div class="cfg-grid">
-        <div class="cfg-field"><label>fps_process (кадрів/сек)</label>
-          <input type="number" id="c_${c}_fps" min="1" max="10" step="1" value="${cc.fps_process||2}"></div>
-        <div class="cfg-field"><label>min_face_w (мін. ширина обличчя, px)</label>
-          <input type="number" id="c_${c}_mfw" min="0" max="300" step="1" value="${cc.min_face_w||0}"></div>
-        <div class="cfg-field"><label>max_pitch (макс. кут нахилу голови °)</label>
-          <input type="number" id="c_${c}_mp" min="10" max="90" step="1" value="${cc.max_pitch||35}"></div>
-        <div class="cfg-field"><label>rotation (поворот камери °)</label>
-          <select id="c_${c}_rot">
-            ${[0,90,180,270].map(v=>`<option value="${v}" ${cc.rotation==v?'selected':''}>${v}°</option>`).join('')}
-          </select></div>
-      </div>
-      <div style="margin-top:12px">
-        <label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:#94a3b8;cursor:pointer">
-          <input type="checkbox" id="c_${c}_gen" ${g.enabled?'checked':''} onchange="toggleGesture('${c}')">
-          Розпізнавання жестів (великий палець → trigger)
-        </label>
-        <div id="c_${c}_gbox" style="margin-top:8px;display:${g.enabled?'grid':'none'};grid-template-columns:1fr 1fr;gap:10px">
-          <div class="cfg-field"><label>gesture fps_process</label>
-            <input type="number" id="c_${c}_gfps" min="1" max="5" step="1" value="${g.fps_process||2}"></div>
-          <div class="cfg-field"><label>gesture cooldown (сек)</label>
-            <input type="number" id="c_${c}_gcd" min="1" max="60" step="1" value="${g.cooldown_sec||5}"></div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  const camSections = camNames.map((c,i)=>camSection(c, cameras[c]||{}, i===0)).join('');
 
   document.getElementById('cfgBody').innerHTML = `
     <div class="cfg-section">
@@ -728,9 +699,81 @@ function renderSettings(d){
     </div>
     <div class="cfg-section">
       <h4>Камери</h4>
-      <div class="cfg-tabs">${tabs}</div>
-      ${camSections}
+      <div class="cfg-tabs" id="cfgTabs">${tabs}
+        <button class="cfg-tab" onclick="addCameraForm()" style="border-style:dashed;color:#6366f1">+ Додати</button>
+      </div>
+      <div id="cfgCams">${camSections}</div>
     </div>`;
+}
+
+function camSection(c, cc, active){
+  const g = cc.gesture || {};
+  return `<div class="cfg-cam${active?' active':''}" id="ccam_${c}">
+    <div class="cfg-grid">
+      <div class="cfg-field" style="grid-column:1/-1"><label>RTSP (основний потік)</label>
+        <input type="text" id="c_${c}_rtsp" value="${cc.rtsp||''}"></div>
+      <div class="cfg-field" style="grid-column:1/-1"><label>RTSP HD (знімки, необов'язково)</label>
+        <input type="text" id="c_${c}_rtsp_hd" value="${cc.rtsp_hd||''}"></div>
+      <div class="cfg-field"><label>fps_process (кадрів/сек)</label>
+        <input type="number" id="c_${c}_fps" min="1" max="10" step="1" value="${cc.fps_process||2}"></div>
+      <div class="cfg-field"><label>min_face_w (мін. ширина обличчя, px)</label>
+        <input type="number" id="c_${c}_mfw" min="0" max="300" step="1" value="${cc.min_face_w||0}"></div>
+      <div class="cfg-field"><label>max_pitch (макс. кут нахилу голови °)</label>
+        <input type="number" id="c_${c}_mp" min="10" max="90" step="1" value="${cc.max_pitch||35}"></div>
+      <div class="cfg-field"><label>rotation (поворот камери °)</label>
+        <select id="c_${c}_rot">
+          ${[0,90,180,270].map(v=>`<option value="${v}" ${cc.rotation==v?'selected':''}>${v}°</option>`).join('')}
+        </select></div>
+    </div>
+    <div style="margin-top:12px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:#94a3b8;cursor:pointer">
+        <input type="checkbox" id="c_${c}_gen" ${g.enabled?'checked':''} onchange="toggleGesture('${c}')">
+        Розпізнавання жестів (великий палець → trigger)
+      </label>
+      <div id="c_${c}_gbox" style="margin-top:8px;display:${g.enabled?'grid':'none'};grid-template-columns:1fr 1fr;gap:10px">
+        <div class="cfg-field"><label>gesture fps_process</label>
+          <input type="number" id="c_${c}_gfps" min="1" max="5" step="1" value="${g.fps_process||2}"></div>
+        <div class="cfg-field"><label>gesture cooldown (сек)</label>
+          <input type="number" id="c_${c}_gcd" min="1" max="60" step="1" value="${g.cooldown_sec||5}"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;text-align:right">
+      <button class="btn br bs" onclick="removeCamera('${c}')">🗑 Видалити камеру ${c}</button>
+    </div>
+  </div>`;
+}
+
+function addCameraForm(){
+  const name = prompt('Назва камери (напр. cam_66):','');
+  if(!name || !name.trim()) return;
+  const c = name.trim();
+  if(_cfgData.cameras[c]){ showToast('✗ Камера вже існує', true); return; }
+  _cfgData.cameras[c] = {rtsp:'', fps_process:2, min_face_w:0, rotation:0};
+  // add tab
+  const tabs = document.getElementById('cfgTabs');
+  const addBtn = tabs.querySelector('button:last-child');
+  const tab = document.createElement('button');
+  tab.className = 'cfg-tab';
+  tab.id = 'ctab_'+c;
+  tab.textContent = c;
+  tab.onclick = ()=>cfgTab(c);
+  tabs.insertBefore(tab, addBtn);
+  // add section
+  document.getElementById('cfgCams').insertAdjacentHTML('beforeend', camSection(c, _cfgData.cameras[c], false));
+  cfgTab(c);
+}
+
+function removeCamera(c){
+  if(!confirm(`Видалити камеру "${c}" з конфігу?\nПотоки зупиняться після перезапуску.`)) return;
+  delete _cfgData.cameras[c];
+  // remove tab and section
+  const tab = document.getElementById('ctab_'+c);
+  const sec = document.getElementById('ccam_'+c);
+  if(tab) tab.remove();
+  if(sec) sec.remove();
+  // activate first remaining tab
+  const first = document.querySelector('.cfg-tab:not([onclick*="addCameraForm"])');
+  if(first) first.click();
 }
 
 function toggleGesture(cam){
@@ -738,32 +781,45 @@ function toggleGesture(cam){
   document.getElementById('c_'+cam+'_gbox').style.display = on ? 'grid' : 'none';
 }
 
+function _collectCameras(){
+  const cameras = {};
+  for(const c of Object.keys(_cfgData.cameras)){
+    const rtsp = document.getElementById('c_'+c+'_rtsp')?.value?.trim();
+    if(!rtsp) continue; // skip if rtsp empty (new camera not filled)
+    const rtsp_hd = document.getElementById('c_'+c+'_rtsp_hd')?.value?.trim();
+    cameras[c] = {
+      rtsp,
+      ...(rtsp_hd ? {rtsp_hd} : {}),
+      fps_process: parseInt(document.getElementById('c_'+c+'_fps').value),
+      min_face_w:  parseInt(document.getElementById('c_'+c+'_mfw').value),
+      max_pitch:   parseInt(document.getElementById('c_'+c+'_mp').value),
+      rotation:    parseInt(document.getElementById('c_'+c+'_rot').value),
+    };
+    // keep original fields not in UI (e.g. mqtt-specific)
+    const orig = _cfgData.cameras[c] || {};
+    Object.keys(orig).forEach(k=>{ if(!(k in cameras[c]) && !['gesture'].includes(k)) cameras[c][k]=orig[k]; });
+    const genOn = document.getElementById('c_'+c+'_gen').checked;
+    if(genOn){
+      cameras[c].gesture = {
+        enabled: true,
+        fps_process: parseInt(document.getElementById('c_'+c+'_gfps').value),
+        cooldown_sec: parseInt(document.getElementById('c_'+c+'_gcd').value),
+      };
+    }
+  }
+  return cameras;
+}
+
 async function saveSettings(){
   if(!_cfgData) return;
-  const cameras = _cfgData.cameras || {};
-  // collect values
   const newCfg = JSON.parse(JSON.stringify(_cfgData));
   newCfg.recognition.similarity_threshold = parseFloat(document.getElementById('r_sim').value);
   newCfg.recognition.unknown_threshold    = parseFloat(document.getElementById('r_unk').value);
   newCfg.recognition.cooldown_sec         = parseInt(document.getElementById('r_cd').value);
   newCfg.recognition.det_score_min        = parseFloat(document.getElementById('r_det').value);
   newCfg.recognition.det_size             = parseInt(document.getElementById('r_ds').value);
-  for(const c of Object.keys(cameras)){
-    newCfg.cameras[c].fps_process = parseInt(document.getElementById('c_'+c+'_fps').value);
-    newCfg.cameras[c].min_face_w  = parseInt(document.getElementById('c_'+c+'_mfw').value);
-    newCfg.cameras[c].max_pitch   = parseInt(document.getElementById('c_'+c+'_mp').value);
-    newCfg.cameras[c].rotation    = parseInt(document.getElementById('c_'+c+'_rot').value);
-    const genOn = document.getElementById('c_'+c+'_gen').checked;
-    if(genOn){
-      newCfg.cameras[c].gesture = {
-        enabled: true,
-        fps_process: parseInt(document.getElementById('c_'+c+'_gfps').value),
-        cooldown_sec: parseInt(document.getElementById('c_'+c+'_gcd').value),
-      };
-    } else {
-      delete newCfg.cameras[c].gesture;
-    }
-  }
+  newCfg.cameras = _collectCameras();
+  if(!Object.keys(newCfg.cameras).length){ showToast('✗ Потрібна хоча б одна камера', true); return; }
   try {
     const r = await fetch('/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newCfg)});
     const d = await r.json();
