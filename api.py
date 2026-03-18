@@ -6,6 +6,7 @@ import threading
 
 import cv2
 import numpy as np
+import yaml
 from flask import Flask, jsonify, request, send_file, Response
 
 log = logging.getLogger(__name__)
@@ -121,6 +122,17 @@ input[type=text]:focus,select:focus{border-color:#6366f1}
 .pp .ppclose{position:fixed;top:10px;right:14px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1}
 /* logs modal */
 .lb{background:#020617;border-radius:8px;padding:12px;font-family:monospace;font-size:.7rem;color:#94a3b8;height:60vh;overflow-y:auto;white-space:pre-wrap;border:1px solid #1e293b;line-height:1.5;margin-top:10px}
+/* settings */
+.cfg-section{margin-bottom:18px}
+.cfg-section h4{font-size:.72rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #334155}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cfg-field{display:flex;flex-direction:column;gap:4px}
+.cfg-field label{font-size:.72rem;color:#94a3b8}
+.cfg-field input,.cfg-field select{padding:6px 8px;border-radius:7px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:.83rem}
+.cfg-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.cfg-tab{padding:5px 12px;border-radius:7px;border:1px solid #334155;background:#0f172a;color:#94a3b8;font-size:.78rem;cursor:pointer}
+.cfg-tab.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.cfg-cam{display:none}.cfg-cam.active{display:block}
 </style>
 </head>
 <body>
@@ -134,6 +146,7 @@ input[type=text]:focus,select:focus{border-color:#6366f1}
   </select>
   <button class="btn bp bs" onclick="reloadDB()">↺ База</button>
   <button class="btn bs" onclick="openLogs()" style="background:#334155;color:#e2e8f0">📋 Логи</button>
+  <button class="btn bs" onclick="openSettings()" style="background:#334155;color:#e2e8f0">⚙️ Налаштування</button>
 </header>
 <main>
 
@@ -222,6 +235,21 @@ input[type=text]:focus,select:focus{border-color:#6366f1}
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn bs" onclick="closeEsDlg()" style="background:#334155;color:#e2e8f0">Скасувати</button>
       <button class="btn bp bs" onclick="confirmEnrollSnap()">Додати</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="mo" id="settingsMo" onclick="closeSettings()" style="z-index:55;align-items:flex-start;padding:20px">
+  <div class="mdlg" style="width:min(640px,96vw)" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
+      <h3 style="flex:1">⚙️ Налаштування</h3>
+      <button style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer" onclick="closeSettings()">✕</button>
+    </div>
+    <div id="cfgBody">Завантаження...</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn bs" onclick="closeSettings()" style="background:#334155;color:#e2e8f0">Скасувати</button>
+      <button class="btn bp bs" onclick="saveSettings()">💾 Зберегти та перезапустити</button>
     </div>
   </div>
 </div>
@@ -622,6 +650,128 @@ function showToast(msg,err){
   clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',3000);
 }
 
+// ── Settings ─────────────────────────────────────────────────────────────────
+let _cfgData = null;
+
+async function openSettings(){
+  document.getElementById('settingsMo').classList.add('on');
+  document.getElementById('cfgBody').innerHTML = 'Завантаження...';
+  try {
+    const d = await api('/config');
+    _cfgData = d;
+    renderSettings(d);
+  } catch(e){ document.getElementById('cfgBody').innerHTML = '✗ Помилка: '+e.message; }
+}
+function closeSettings(){ document.getElementById('settingsMo').classList.remove('on'); }
+
+function cfgTab(camName){
+  document.querySelectorAll('.cfg-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.cfg-cam').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ctab_'+camName).classList.add('active');
+  document.getElementById('ccam_'+camName).classList.add('active');
+}
+
+function renderSettings(d){
+  const rec = d.recognition || {};
+  const cameras = d.cameras || {};
+  const camNames = Object.keys(cameras);
+
+  const tabs = camNames.map((c,i)=>`<button class="cfg-tab${i===0?' active':''}" id="ctab_${c}" onclick="cfgTab('${c}')">${c}</button>`).join('');
+  const camSections = camNames.map((c,i)=>{
+    const cc = cameras[c] || {};
+    const g = cc.gesture || {};
+    return `<div class="cfg-cam${i===0?' active':''}" id="ccam_${c}">
+      <div class="cfg-grid">
+        <div class="cfg-field"><label>fps_process (кадрів/сек)</label>
+          <input type="number" id="c_${c}_fps" min="1" max="10" step="1" value="${cc.fps_process||2}"></div>
+        <div class="cfg-field"><label>min_face_w (мін. ширина обличчя, px)</label>
+          <input type="number" id="c_${c}_mfw" min="0" max="300" step="1" value="${cc.min_face_w||0}"></div>
+        <div class="cfg-field"><label>max_pitch (макс. кут нахилу голови °)</label>
+          <input type="number" id="c_${c}_mp" min="10" max="90" step="1" value="${cc.max_pitch||35}"></div>
+        <div class="cfg-field"><label>rotation (поворот камери °)</label>
+          <select id="c_${c}_rot">
+            ${[0,90,180,270].map(v=>`<option value="${v}" ${cc.rotation==v?'selected':''}>${v}°</option>`).join('')}
+          </select></div>
+      </div>
+      <div style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:#94a3b8;cursor:pointer">
+          <input type="checkbox" id="c_${c}_gen" ${g.enabled?'checked':''} onchange="toggleGesture('${c}')">
+          Розпізнавання жестів (великий палець → trigger)
+        </label>
+        <div id="c_${c}_gbox" style="margin-top:8px;display:${g.enabled?'grid':'none'};grid-template-columns:1fr 1fr;gap:10px">
+          <div class="cfg-field"><label>gesture fps_process</label>
+            <input type="number" id="c_${c}_gfps" min="1" max="5" step="1" value="${g.fps_process||2}"></div>
+          <div class="cfg-field"><label>gesture cooldown (сек)</label>
+            <input type="number" id="c_${c}_gcd" min="1" max="60" step="1" value="${g.cooldown_sec||5}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cfgBody').innerHTML = `
+    <div class="cfg-section">
+      <h4>Розпізнавання (глобально)</h4>
+      <div class="cfg-grid">
+        <div class="cfg-field"><label>similarity_threshold (впевнене розпізнавання)</label>
+          <input type="number" id="r_sim" min="0.1" max="1" step="0.01" value="${rec.similarity_threshold||0.50}"></div>
+        <div class="cfg-field"><label>unknown_threshold (мінімум для збереження)</label>
+          <input type="number" id="r_unk" min="0.1" max="1" step="0.01" value="${rec.unknown_threshold||0.38}"></div>
+        <div class="cfg-field"><label>cooldown_sec (пауза між сповіщеннями)</label>
+          <input type="number" id="r_cd" min="1" max="3600" step="1" value="${rec.cooldown_sec||30}"></div>
+        <div class="cfg-field"><label>det_score_min (мінімум детектора)</label>
+          <input type="number" id="r_det" min="0.1" max="1" step="0.01" value="${rec.det_score_min||0.3}"></div>
+        <div class="cfg-field"><label>det_size (розмір детекції)</label>
+          <select id="r_ds">
+            ${[160,320,640].map(v=>`<option value="${v}" ${rec.det_size==v?'selected':''}>${v}×${v}</option>`).join('')}
+          </select></div>
+      </div>
+    </div>
+    <div class="cfg-section">
+      <h4>Камери</h4>
+      <div class="cfg-tabs">${tabs}</div>
+      ${camSections}
+    </div>`;
+}
+
+function toggleGesture(cam){
+  const on = document.getElementById('c_'+cam+'_gen').checked;
+  document.getElementById('c_'+cam+'_gbox').style.display = on ? 'grid' : 'none';
+}
+
+async function saveSettings(){
+  if(!_cfgData) return;
+  const cameras = _cfgData.cameras || {};
+  // collect values
+  const newCfg = JSON.parse(JSON.stringify(_cfgData));
+  newCfg.recognition.similarity_threshold = parseFloat(document.getElementById('r_sim').value);
+  newCfg.recognition.unknown_threshold    = parseFloat(document.getElementById('r_unk').value);
+  newCfg.recognition.cooldown_sec         = parseInt(document.getElementById('r_cd').value);
+  newCfg.recognition.det_score_min        = parseFloat(document.getElementById('r_det').value);
+  newCfg.recognition.det_size             = parseInt(document.getElementById('r_ds').value);
+  for(const c of Object.keys(cameras)){
+    newCfg.cameras[c].fps_process = parseInt(document.getElementById('c_'+c+'_fps').value);
+    newCfg.cameras[c].min_face_w  = parseInt(document.getElementById('c_'+c+'_mfw').value);
+    newCfg.cameras[c].max_pitch   = parseInt(document.getElementById('c_'+c+'_mp').value);
+    newCfg.cameras[c].rotation    = parseInt(document.getElementById('c_'+c+'_rot').value);
+    const genOn = document.getElementById('c_'+c+'_gen').checked;
+    if(genOn){
+      newCfg.cameras[c].gesture = {
+        enabled: true,
+        fps_process: parseInt(document.getElementById('c_'+c+'_gfps').value),
+        cooldown_sec: parseInt(document.getElementById('c_'+c+'_gcd').value),
+      };
+    } else {
+      delete newCfg.cameras[c].gesture;
+    }
+  }
+  try {
+    const r = await fetch('/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newCfg)});
+    const d = await r.json();
+    if(r.ok){ closeSettings(); showToast('✓ Збережено, перезапуск...'); }
+    else showToast('✗ '+(d.error||'Помилка'), true);
+  } catch(e){ showToast('✗ '+e.message, true); }
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 checkHealth();
 loadCameras().then(()=>{ loadPersons(); loadSnaps(); loadUnknown(); });
@@ -862,6 +1012,34 @@ def create_app(face_dbs, snapshot_dir=SNAPSHOT_DIR, cameras=None):
             return jsonify({"lines": result.stdout})
         except Exception as e:
             return jsonify({"lines": str(e)})
+
+    _config_path = os.environ.get("FR2_CONFIG", "/opt/facerecog2/app/config.yml")
+
+    @app.route("/config", methods=["GET"])
+    def get_config():
+        try:
+            with open(_config_path) as f:
+                cfg = yaml.safe_load(f)
+            return jsonify(cfg)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/config", methods=["POST"])
+    def save_config():
+        try:
+            cfg = request.get_json(force=True)
+            if not cfg:
+                return jsonify({"error": "empty body"}), 400
+            with open(_config_path, "w") as f:
+                yaml.dump(cfg, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+            # restart service after short delay so response is sent first
+            def _restart():
+                import time; time.sleep(1)
+                subprocess.run(["systemctl", "restart", "facerecog2"], check=False)
+            threading.Thread(target=_restart, daemon=True).start()
+            return jsonify({"status": "saved"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/trigger/<camera_name>", methods=["POST"])
     def trigger(camera_name):

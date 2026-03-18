@@ -44,6 +44,7 @@ class CameraPipeline(threading.Thread):
         # minimum face width in pixels to attempt recognition/save
         # faces smaller than this are completely ignored (distant/blurry)
         self.min_face_w = cfg.get("min_face_w", 0)
+        self.max_pitch = cfg.get("max_pitch", 35)  # max head pitch for unknown saves
         self.recognizer = recognizer
         self.face_db = face_db
         self.mqtt = mqtt_client
@@ -130,11 +131,11 @@ class CameraPipeline(threading.Thread):
             if name == "unknown":
                 pose = face.get("pose")
                 frontal = (pose is None or
-                           (abs(pose[0]) < 30 and abs(pose[1]) < 35))
+                           (abs(pose[0]) < 30 and abs(pose[1]) < self.max_pitch))
                 if (frontal
                         and face_w >= 80
                         and now_mono - self._last_unknown >= UNKNOWN_COOLDOWN
-                        and face["det_score"] >= 0.5):
+                        and face["det_score"] >= 0.45):
                     # async HD grab + save so loop is not blocked
                     self._hd_executor.submit(self._grab_and_save_unknown, frame, face)
                     self._last_unknown = now_mono
