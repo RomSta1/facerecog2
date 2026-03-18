@@ -11,6 +11,7 @@ from recognizer import Recognizer
 from pipeline import CameraPipeline
 from mqtt_client import MQTTClient
 from api import run_api
+from gesture import GesturePipeline
 
 logging.basicConfig(
     level=logging.INFO,
@@ -141,6 +142,20 @@ def main():
             snap_cfg["path"], rec_cfg["cooldown_sec"], stop_event,
         )
         cameras[cam_name] = threads[cam_name]
+
+    for cam_name, cam_cfg in cfg["cameras"].items():
+        gesture_cfg = cam_cfg.get("gesture", {})
+        if gesture_cfg.get("enabled"):
+            GesturePipeline(
+                camera_name=cam_name,
+                rtsp=cam_cfg["rtsp"],
+                rotation=cam_cfg.get("rotation", 0),
+                fps_process=gesture_cfg.get("fps_process", 2),
+                cooldown_sec=gesture_cfg.get("cooldown_sec", 5),
+                stop_event=stop_event,
+                on_thumbs_up=threads[cam_name].trigger,
+            ).start()
+            log.info("[%s] gesture pipeline started", cam_name)
 
     watchdog_t = threading.Thread(
         target=_watchdog,
