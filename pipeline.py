@@ -155,8 +155,11 @@ class CameraPipeline(threading.Thread):
                 frontal = (pose is None or
                            (abs(pose[0]) < 30 and abs(pose[1]) < self.max_pitch))
 
+                # FIX: use per-camera min_face_w instead of hardcoded 80;
+                # fall back to 40 so we don't save tiny blobs on cameras with min_face_w=0
+                min_unknown_w = max(self.min_face_w, 40)
                 if (frontal
-                        and face_w >= 80
+                        and face_w >= min_unknown_w
                         and now_mono - self._last_unknown >= UNKNOWN_COOLDOWN
                         and face["det_score"] >= 0.45):
                     self._hd_executor.submit(self._grab_and_save_unknown, frame, face)
