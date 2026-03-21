@@ -170,6 +170,7 @@ input[type=text]:focus,select:focus{border-color:#6366f1}
   <div class="row">
     <button class="btn bp bs" onclick="loadUnknown()">Оновити</button>
     <span id="ucnt" style="font-size:.76rem;color:#64748b"></span>
+    <button class="btn br bs" onclick="deleteAllUnknown()" style="margin-left:auto">🗑 Всі</button>
   </div>
   <div class="ug" id="ug"><div class="empty">Немає невідомих облич</div></div>
 </div>
@@ -601,6 +602,14 @@ async function deleteUnknown(fname){
   loadUnknown();
 }
 
+async function deleteAllUnknown(){
+  if(!confirm('Видалити всі невідомі обличчя?')) return;
+  const r=await fetch('/unknown',{method:'DELETE'});
+  const d=await r.json();
+  showToast(`🗑 Видалено ${d.removed} фото`);
+  loadUnknown();
+}
+
 // ── Snaps misc ───────────────────────────────────────────────────────────────
 async function deleteAllSnaps(){
   if(!confirm('Видалити всі знімки?')) return;
@@ -968,6 +977,19 @@ def create_app(face_dbs, snapshot_dir=SNAPSHOT_DIR, cameras=None):
         if count == 0:
             return jsonify({"status": "moved", "person": person, "warning": "no face detected, photo saved without embedding"})
         return jsonify({"status": "assigned", "person": person, "total": count})
+
+    @app.route("/unknown", methods=["DELETE"])
+    def delete_all_unknown():
+        removed = 0
+        if os.path.isdir(unknown_dir):
+            for fname in os.listdir(unknown_dir):
+                if fname.lower().endswith((".jpg", ".jpeg", ".png")):
+                    try:
+                        os.remove(os.path.join(unknown_dir, fname))
+                        removed += 1
+                    except Exception:
+                        pass
+        return jsonify({"status": "ok", "removed": removed})
 
     @app.route("/unknown/<fname>", methods=["DELETE"])
     def delete_unknown(fname):
