@@ -78,15 +78,24 @@ class CameraPipeline(threading.Thread):
             last_process = 0.0
 
             while not self.stop_event.is_set():
-                ret, frame = cap.read()
-                if not ret:
-                    log.warning("[%s] read failed, reconnecting", self.camera_name)
+                # FIX: grab() drains the network buffer without decoding;
+                # retrieve() decodes only the frame we actually need.
+                # This ensures we always process the freshest frame, not a
+                # buffered-seconds-ago one (CAP_PROP_BUFFERSIZE=1 is unreliable
+                # with the FFMPEG backend).
+                if not cap.grab():
+                    log.warning("[%s] grab failed, reconnecting", self.camera_name)
                     break
 
                 now = time.monotonic()
                 if now - last_process < frame_interval:
                     continue
                 last_process = now
+
+                ret, frame = cap.retrieve()
+                if not ret:
+                    log.warning("[%s] retrieve failed, reconnecting", self.camera_name)
+                    break
 
                 # FIX Bug1: rotate один раз тут, передаємо вже повернутий в _process
                 rotated = self._rotate(frame)
@@ -230,11 +239,14 @@ class CameraPipeline(threading.Thread):
                 return
 
             cv2.imwrite(f"/tmp/trigger_{self.camera_name}.jpg", frame)
-            faces = self.recognizer.get_faces(apply_clahe(frame))
+            # FIX Bug3: detect once here, pass results into _process_raw to avoid
+            # running recognizer.get_faces() twice on the same frame
+            enhanced = apply_clahe(frame)
+            faces = self.recognizer.get_faces(enhanced)
             log.info("[%s] trigger: %d faces in last frame", self.camera_name, len(faces))
 
             if faces:
-                self._process_raw(frame)
+                self._process_raw(frame, faces)
             else:
                 # якщо в останньому кадрі немає облич — спробуємо ще раз через HD
                 log.info("[%s] trigger: no faces in last frame, trying HD grab", self.camera_name)
@@ -243,15 +255,16 @@ class CameraPipeline(threading.Thread):
                     faces_hd = self.recognizer.get_faces(apply_clahe(hd))
                     log.info("[%s] trigger HD: %d faces", self.camera_name, len(faces_hd))
                     if faces_hd:
-                        self._process_raw(hd)
+                        self._process_raw(hd, faces_hd)
 
         except Exception:
             log.exception("[%s] trigger crashed", self.camera_name)
 
-    def _process_raw(self, frame):
-        """Run recognition on an already-rotated frame (used by trigger)."""
-        enhanced = apply_clahe(frame)
-        faces = self.recognizer.get_faces(enhanced)
+    def _process_raw(self, frame, faces=None):
+        """Run recognition on an already-rotated frame (used by trigger).
+        If faces are provided (pre-detected by caller), skip detection."""
+        if faces is None:
+            faces = self.recognizer.get_faces(apply_clahe(frame))
 
         if not faces:
             log.info("[%s] trigger: no faces detected", self.camera_name)
