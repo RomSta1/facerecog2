@@ -49,8 +49,13 @@ def _cleanup_snapshots(snapshot_dir, keep_hours, stop_event):
         stop_event.wait(3600)
 
 
-def _make_face_db(cam_name, db_cfg, rec_cfg):
-    """Create a FaceDB instance for a specific camera."""
+def _make_face_db(cam_name, cam_cfg, db_cfg, rec_cfg):
+    """Create a FaceDB instance for a specific camera.
+
+    Per-camera similarity_threshold / unknown_threshold in the camera's
+    config block override the global recognition defaults, allowing each
+    camera to be tuned independently for its angle and lighting.
+    """
     faces_dir = os.path.join(db_cfg["path"], cam_name)
     cache_base, cache_ext = os.path.splitext(db_cfg["cache"])
     cache_path = f"{cache_base}_{cam_name}{cache_ext}"
@@ -59,8 +64,10 @@ def _make_face_db(cam_name, db_cfg, rec_cfg):
     return FaceDB(
         faces_dir=faces_dir,
         cache_path=cache_path,
-        similarity_threshold=rec_cfg["similarity_threshold"],
-        unknown_threshold=rec_cfg["unknown_threshold"],
+        similarity_threshold=cam_cfg.get("similarity_threshold",
+                                          rec_cfg["similarity_threshold"]),
+        unknown_threshold=cam_cfg.get("unknown_threshold",
+                                       rec_cfg["unknown_threshold"]),
     )
 
 
@@ -111,8 +118,8 @@ def main():
 
     # one FaceDB per camera — separate faces dirs and cache files
     face_dbs = {}
-    for cam_name in cfg["cameras"]:
-        face_dbs[cam_name] = _make_face_db(cam_name, db_cfg, rec_cfg)
+    for cam_name, cam_cfg in cfg["cameras"].items():
+        face_dbs[cam_name] = _make_face_db(cam_name, cam_cfg, db_cfg, rec_cfg)
 
     recognizer = Recognizer(
         det_score_min=rec_cfg["det_score_min"],

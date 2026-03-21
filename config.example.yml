@@ -5,12 +5,26 @@ cameras:
     rotation: 90
     fps_process: 5
     min_face_w: 60        # ignore faces narrower than this (distant/blurry)
+    max_pitch: 35
   cam_64:
     rtsp: rtsp://user:password@192.168.1.64/stream2
     rtsp_hd: rtsp://user:password@192.168.1.64/stream1
     rotation: 0
     fps_process: 2
     min_face_w: 0
+    max_pitch: 80
+  cam_63:
+    rtsp: rtsp://user:password@192.168.1.63/stream2
+    rtsp_hd: rtsp://user:password@192.168.1.63/stream1
+    rotation: 0
+    fps_process: 2
+    min_face_w: 0
+    max_pitch: 80
+    # Per-camera threshold overrides — useful when a camera's angle or
+    # lighting makes faces look different from the global defaults.
+    # Omit to use the global recognition values below.
+    similarity_threshold: 0.45  # lower = more permissive (good for steep angles)
+    unknown_threshold: 0.33
 
 recognition:
   det_score_min: 0.3
